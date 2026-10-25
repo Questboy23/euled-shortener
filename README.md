@@ -4,12 +4,12 @@ Euled shortens machine-written Lean 4 proofs. On all four of ByteDance Seed-Prov
 
 | Problem | ProofOptimizer cut | Euled cut (their count) | Euled cut (strict count) | Original → Euled (their count) |
 |---|---|---|---|---|
-| P1 | 43.8% | **85.8%** | 78.4% | 36438 → 5170 |
+| P1 | 43.8% | **85.9%** | 78.7% | 36438 → 5147 |
 | P3 | 51.7% | **84.8%** | 73.7% | 16341 → 2485 |
 | P4 | 50.1% | **83.0%** | 69.5% | 29082 → 4931 |
 | P5 | 53.8% | **81.2%** | 84.7% | 8637 → 1625 |
 
-ProofOptimizer's numbers come from Table 3 of [arXiv 2510.15700](https://arxiv.org/abs/2510.15700). Bold marks a problem where Euled beats ProofOptimizer. Each column shows the best Lean-verified file for that count: `results/P*/euled.lean` for their count, `results/P*/euled_strict.lean` for the strict count. Rows marked "running" are still being compressed. Last updated 2026-10-25 16:02 ET.
+ProofOptimizer's numbers come from Table 3 of [arXiv 2510.15700](https://arxiv.org/abs/2510.15700). Bold marks a problem where Euled beats ProofOptimizer. Each column shows the best Lean-verified file for that count: `results/P*/euled.lean` for their count, `results/P*/euled_strict.lean` for the strict count. Rows marked "running" are still being compressed. Last updated 2026-10-25 16:14 ET.
 
 **Try it on your own proof:** [reedsmoneymaker23.com/euled/shorten](https://reedsmoneymaker23.com/euled/shorten/)
 
