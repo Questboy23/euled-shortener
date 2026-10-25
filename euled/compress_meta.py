@@ -77,6 +77,7 @@ class Meta:
         self.orig_strict = int(os.environ.get("EULED_ORIG_STRICT", "0")) or po(text)
         self.orig_loose = int(os.environ.get("EULED_ORIG_LOOSE", "0")) or loose(text)
         self.stats = {k: {"saved": 0, "checks": 0, "tries": 0} for k in ("dce", "shortcut", "closer", "shared", "inline", "bridge", "fresh")}
+        self.stats["stretch"] = {"saved": 0, "checks": 0, "tries": 0}
         self.rounds = []
         self.t0 = time.time()
 
@@ -358,7 +359,7 @@ class Meta:
                 await self.accept(C.assemble(h, nd, t), "dce")
 
     async def run(self):
-        ops = list(self.stats)
+        ops = [k for k in self.stats if k != "stretch"]
         rnd = 0
         while self.ctx.calls < MAX_CHECKS:
             rnd += 1
@@ -415,7 +416,11 @@ async def main():
     assert await m.ok(text), "input does not compile"
     log("meta start", PROB, "strict", po(text), "loose", loose(text))
     m.publish("start")
-    final = await m.run()
+    try:
+        final = await m.run()
+    except Exception as ex:
+        log("meta crashed, keeping best verified text:", type(ex).__name__, str(ex)[:200])
+        final = m.text
     rep = {"problem": PROB, "orig_strict": m.orig_strict, "orig_loose": m.orig_loose, "paper_orig": ORIG[PROB], "paper_simplified": POPT[PROB],
            "proofoptimizer_pct": round(100 * (1 - POPT[PROB] / ORIG[PROB]), 1), "input_strict": po(text), "final_strict": po(final), "final_loose": loose(final),
            "final_pct_strict": round(100 * (1 - po(final) / m.orig_strict), 2), "final_pct_loose": round(100 * (1 - loose(final) / m.orig_loose), 2), "rounds": m.rounds, "operators": m.stats, "checks": m.ctx.calls,
