@@ -9,7 +9,7 @@ Euled shortens machine-written Lean 4 proofs. On all four of ByteDance Seed-Prov
 | P4 | 50.1% | **84.5%** | 71.5% | 29082 → 4497 |
 | P5 | 53.8% | **81.2%** | 84.7% | 8637 → 1625 |
 
-ProofOptimizer's numbers come from Table 3 of [arXiv 2510.15700](https://arxiv.org/abs/2510.15700). Bold marks a problem where Euled beats ProofOptimizer. Each column shows the best Lean-verified file for that count: `results/P*/euled.lean` for their count, `results/P*/euled_strict.lean` for the strict count. Rows marked "running" are still being compressed. Last updated 2026-10-25 16:29 ET.
+ProofOptimizer's numbers come from Table 3 of [arXiv 2510.15700](https://arxiv.org/abs/2510.15700). Bold marks a problem where Euled beats ProofOptimizer. Each column shows the best Lean-verified file for that count: `results/P*/euled.lean` for their count, `results/P*/euled_strict.lean` for the strict count. Rows marked "running" are still being compressed. Last updated 2026-10-25 17:17 ET.
 
 **Try it on your own proof:** [reedsmoneymaker23.com/euled/shorten](https://reedsmoneymaker23.com/euled/shorten/)
 
