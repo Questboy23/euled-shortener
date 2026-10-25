@@ -316,7 +316,14 @@ class Meta:
                    f"`nlinarith`/`omega`/`positivity`/`grind` call with the right hints, or reusing these earlier lemmas: {', '.join(names[-12:]) or 'none'}. "
                    f"Return only the full declaration in one ```lean block.\n```lean\n{d}\n```")
             best = None
-            out = await asyncio.to_thread(C.haiku, ask)
+            def strong(q):
+                # stretch first attempts use a stronger model than the routine passes (Sonnet on the Max plan)
+                try:
+                    txt, _ = E.ask_max(q, os.environ.get("EULED_STRETCH_MODEL", "claude-sonnet-5-5"))
+                    return lean_block(txt)
+                except Exception:
+                    return C.haiku(q)
+            out = await asyncio.to_thread(strong, ask)
             for k in range(repairs + 1):
                 if out:
                     m = re.search(r"(lemma|theorem)\s", out)
@@ -340,7 +347,7 @@ class Meta:
                                     out = lean_block(txt)
                                     continue
                 if k < repairs:
-                    out = await asyncio.to_thread(C.haiku, ask)
+                    out = await asyncio.to_thread(strong, ask)
         await asyncio.gather(*[one(i) for i in order])
         got = saved0 - po(self.text)
         log(f"STRETCH result: demanded -{saved0 - target}, got -{got} ({100 * got / max(1, saved0 - target):.0f}% of the demand)")

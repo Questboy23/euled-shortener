@@ -114,11 +114,11 @@ def ask_fcc(prompt, temp, max_tokens):
 USE_MAX = os.environ.get("EULED_MAX_PROPOSER") == "1"
 
 
-def ask_max(prompt):
+def ask_max(prompt, model="claude-haiku-5-5"):
     """Claude on Reed's Max plan through the CLI (Haiku, no tools). Used only with --max-proposer."""
     import subprocess
     env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_BASE_URL", "ANTHROPIC_AUTH_TOKEN")}
-    r = subprocess.run([os.path.expanduser("~/.local/bin/claude"), "-p", prompt, "--model", "claude-haiku-5-5",
+    r = subprocess.run([os.path.expanduser("~/.local/bin/claude"), "-p", prompt, "--model", model,
                         "--output-format", "json", "--max-turns", "1", "--tools", ""], capture_output=True, text=True, timeout=300, env=env, stdin=subprocess.DEVNULL)
     d = json.loads(r.stdout or "{}")
     u = d.get("usage", {})
