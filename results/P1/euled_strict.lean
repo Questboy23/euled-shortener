@@ -7,61 +7,6 @@ set_option maxRecDepth 1000
 set_option tactic.hygienic false
 open BigOperators Real Nat Topology Rat Classical Polynomial
 namespace IMO2025.P1
-lemma round1_case1 (n : ℕ)
-  (k : ℕ)
-  (verts : Finset ℝ)
-  (lines : Finset (ℝ × ℝ))
-  (points : Finset (ℕ × ℕ))
-  (hn : n = 3)
-  (hcard : lines.card + verts.card = n)
-  (hallpoints : ∀ p, p ∈ points ↔ p.1 ≥ 1 ∧ p.2 ≥ 1 ∧ p.1 + p.2 ≤ n + 1)
-  (hmain : ∀ p ∈ points, (∃ l ∈ lines, l.1 * (p.1 : ℝ) + l.2 = (p.2 : ℝ)) ∨ (∃ x ∈ verts, (p.1 : ℝ) = x))
-  (h411 : ∀ l ∈ lines, l.1 ≠ 0 ∧ l.1 ≠ -1)
-  (h412 : verts.card = 1):
-  False := by
-  subst hn
-  obtain ⟨a, b, -, rfl⟩ := Finset.card_eq_two.mp (show lines.card = 2 by omega)
-  obtain ⟨v, rfl⟩ := Finset.card_eq_one.mp h412
-  obtain ⟨ha1, ha2⟩ := h411 a (by simp)
-  obtain ⟨hb1, hb2⟩ := h411 b (by simp)
-  have h11 := hmain (1, 1) ((hallpoints _).2 (by norm_num))
-  have h12 := hmain (1, 2) ((hallpoints _).2 (by norm_num))
-  have h13 := hmain (1, 3) ((hallpoints _).2 (by norm_num))
-  have h21 := hmain (2, 1) ((hallpoints _).2 (by norm_num))
-  have h22 := hmain (2, 2) ((hallpoints _).2 (by norm_num))
-  have h31 := hmain (3, 1) ((hallpoints _).2 (by norm_num))
-  norm_num [Finset.mem_insert, Finset.mem_singleton, or_assoc] at h11 h12 h13 h21 h22 h31
-  rcases h11 with h11 | h11 | h11 <;> rcases h12 with h12 | h12 | h12 <;> rcases h13 with h13 | h13 | h13 <;> rcases h21 with h21 | h21 | h21 <;> rcases h22 with h22 | h22 | h22 <;> rcases h31 with h31 | h31 | h31 <;> (first | linarith | exact ha1 (by linarith) | exact ha2 (by linarith) | exact hb1 (by linarith) | exact hb2 (by linarith))
-
-lemma round1_case2 (n : ℕ)
-  (k : ℕ)
-  (verts : Finset ℝ)
-  (lines : Finset (ℝ × ℝ))
-  (points : Finset (ℕ × ℕ))
-  (hn : n = 3)
-  (hcard : lines.card + verts.card = n)
-  (hallpoints : ∀ p, p ∈ points ↔ p.1 ≥ 1 ∧ p.2 ≥ 1 ∧ p.1 + p.2 ≤ n + 1)
-  (hmain : ∀ p ∈ points, (∃ l ∈ lines, l.1 * (p.1 : ℝ) + l.2 = (p.2 : ℝ)) ∨ (∃ x ∈ verts, (p.1 : ℝ) = x))
-  (h421 : (lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1)).card = 1)
-  (h422 : verts.card = 0):
-  False := by
-  have mem : ∀ a b : ℕ, 1 ≤ a → 1 ≤ b → a + b ≤ 4 → ∃ l ∈ lines, l.1 * (a : ℝ) + l.2 = (b : ℝ) := by
-    intro a b h1 h2 h3
-    rcases hmain (a, b) ((hallpoints (a, b)).2 ⟨h1, h2, by show a + b ≤ n + 1; omega⟩) with h | ⟨x, hx, _⟩
-    exacts [h, by simp [Finset.card_eq_zero.mp h422] at hx]
-  obtain ⟨p, hp, hp1⟩ := mem 1 1 (by norm_num) (by norm_num) (by norm_num); obtain ⟨q, hq, hq1⟩ := mem 1 2 (by norm_num) (by norm_num) (by norm_num); obtain ⟨r, hr, hr1⟩ := mem 1 3 (by norm_num) (by norm_num) (by norm_num)
-  obtain ⟨s1, hs1, e21⟩ := mem 2 1 (by norm_num) (by norm_num) (by norm_num); obtain ⟨s2, hs2, e22⟩ := mem 2 2 (by norm_num) (by norm_num) (by norm_num); obtain ⟨s3, hs3, e31⟩ := mem 3 1 (by norm_num) (by norm_num) (by norm_num)
-  norm_num at hp1 hq1 hr1 e21 e22 e31
-  have ⟨hpq, hpr, hqr⟩ : p ≠ q ∧ p ≠ r ∧ q ≠ r := by refine ⟨?_, ?_, ?_⟩ <;> rintro rfl <;> linarith
-  have heq : ({p, q, r} : Finset (ℝ × ℝ)) = lines := Finset.eq_of_subset_of_card_le (fun l hl => by simp only [Finset.mem_insert, Finset.mem_singleton] at hl; rcases hl with rfl | rfl | rfl <;> assumption) (by have := Finset.card_eq_three.mpr ⟨p, q, r, hpq, hpr, hqr, rfl⟩; omega)
-  have hmem : ∀ l ∈ lines, l = p ∨ l = q ∨ l = r := fun l hl => by rw [← heq] at hl; simpa using hl
-  have hk : ∀ x ∈ lines, ∀ y ∈ lines, x ≠ y → (x.1 = 0 ∨ x.1 = -1) → (y.1 = 0 ∨ y.1 = -1) → False := fun x hx y hy hxy h1 h2 => by have hlt : 1 < (lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1)).card := Finset.one_lt_card.mpr ⟨x, Finset.mem_filter.mpr ⟨hx, h1⟩, y, Finset.mem_filter.mpr ⟨hy, h2⟩, hxy⟩; rw [h421] at hlt; omega
-  have key0 : (p.1 = 0 ∨ p.1 = -1) ∨ (q.1 = 0 ∨ q.1 = -1) ∨ (r.1 = 0 ∨ r.1 = -1) := by
-    obtain ⟨a, ha⟩ := Finset.card_eq_one.mp h421
-    obtain ⟨hal, hpa⟩ := Finset.mem_filter.mp (show a ∈ lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1) by rw [ha]; exact Finset.mem_singleton_self a)
-    rcases hmem a hal with rfl | rfl | rfl <;> first | exact Or.inl hpa | exact Or.inr (Or.inl hpa) | exact Or.inr (Or.inr hpa)
-  rcases hmem s1 hs1 with rfl | rfl | rfl <;> rcases hmem s2 hs2 with rfl | rfl | rfl <;> rcases hmem s3 hs3 with rfl | rfl | rfl <;> first | linarith | exact hk _ hp _ hq hpq (by first | (left; linarith) | (right; linarith)) (by first | (left; linarith) | (right; linarith)) | exact hk _ hp _ hr hpr (by first | (left; linarith) | (right; linarith)) (by first | (left; linarith) | (right; linarith)) | exact hk _ hq _ hr hqr (by first | (left; linarith) | (right; linarith)) (by first | (left; linarith) | (right; linarith)) | (rcases key0 with (h | h) | (h | h) | (h | h) <;> linarith)
-
 theorem k2_impossible_for_n3 (n : ℕ) (k : ℕ) (verts : Finset ℝ) (lines : Finset (ℝ × ℝ)) (points : Finset (ℕ × ℕ))
   (hn : n = 3) (hk : k = 2)
   (hcard : lines.card + verts.card = n) (hallpoints : ∀ p, p ∈ points ↔ p.1 ≥ 1 ∧ p.2 ≥ 1 ∧ p.1 + p.2 ≤ n + 1)
@@ -71,9 +16,39 @@ theorem k2_impossible_for_n3 (n : ℕ) (k : ℕ) (verts : Finset ℝ) (lines : F
   have hsplit := Finset.filter_card_add_filter_neg_card_eq_card (s := lines) (fun l : ℝ × ℝ => l.1 ≠ 0 ∧ l.1 ≠ -1)
   have hneg : lines.filter (fun l : ℝ × ℝ => ¬ (l.1 ≠ 0 ∧ l.1 ≠ -1)) = lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1) := Finset.filter_congr fun l _ => by simp only [ne_eq, not_and_or, not_not]
   rw [hneg, hk_sunny] at hsplit
-  rcases (show (lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1)).card = 0 ∨ (lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1)).card = 1 by omega) with h0 | h1
-  · exact round1_case1 n k verts lines points hn hcard hallpoints hmain (fun l hl => by simpa [not_or] using Finset.filter_eq_empty_iff.mp (Finset.card_eq_zero.mp h0) hl) (by omega)
-  · exact round1_case2 n k verts lines points hn hcard hallpoints hmain h1 (by omega)
+  rcases (show (lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1)).card = 0 ∨ (lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1)).card = 1 by omega) with h0 | h421
+  · have hl : ∀ l ∈ lines, l.1 ≠ 0 ∧ l.1 ≠ -1 := fun l hl => by simpa [not_or] using Finset.filter_eq_empty_iff.mp (Finset.card_eq_zero.mp h0) hl
+    have h412 : verts.card = 1 := by omega
+    subst hn
+    obtain ⟨a, b, -, rfl⟩ := Finset.card_eq_two.mp (show lines.card = 2 by omega)
+    obtain ⟨v, rfl⟩ := Finset.card_eq_one.mp h412
+    obtain ⟨ha1, ha2⟩ := hl a (by simp)
+    obtain ⟨hb1, hb2⟩ := hl b (by simp)
+    have h11 := hmain (1, 1) ((hallpoints _).2 (by norm_num))
+    have h12 := hmain (1, 2) ((hallpoints _).2 (by norm_num))
+    have h13 := hmain (1, 3) ((hallpoints _).2 (by norm_num))
+    have h21 := hmain (2, 1) ((hallpoints _).2 (by norm_num))
+    have h22 := hmain (2, 2) ((hallpoints _).2 (by norm_num))
+    have h31 := hmain (3, 1) ((hallpoints _).2 (by norm_num))
+    norm_num [Finset.mem_insert, Finset.mem_singleton, or_assoc] at h11 h12 h13 h21 h22 h31
+    rcases h11 with h11 | h11 | h11 <;> rcases h12 with h12 | h12 | h12 <;> rcases h13 with h13 | h13 | h13 <;> rcases h21 with h21 | h21 | h21 <;> rcases h22 with h22 | h22 | h22 <;> rcases h31 with h31 | h31 | h31 <;> (first | linarith | exact ha1 (by linarith) | exact ha2 (by linarith) | exact hb1 (by linarith) | exact hb2 (by linarith))
+  · have h422 : verts.card = 0 := by omega
+    have mem : ∀ a b : ℕ, 1 ≤ a → 1 ≤ b → a + b ≤ 4 → ∃ l ∈ lines, l.1 * (a : ℝ) + l.2 = (b : ℝ) := by
+      intro a b h1 h2 h3
+      rcases hmain (a, b) ((hallpoints (a, b)).2 ⟨h1, h2, by show a + b ≤ n + 1; omega⟩) with h | ⟨x, hx, _⟩
+      exacts [h, by simp [Finset.card_eq_zero.mp h422] at hx]
+    obtain ⟨p, hp, hp1⟩ := mem 1 1 (by norm_num) (by norm_num) (by norm_num); obtain ⟨q, hq, hq1⟩ := mem 1 2 (by norm_num) (by norm_num) (by norm_num); obtain ⟨r, hr, hr1⟩ := mem 1 3 (by norm_num) (by norm_num) (by norm_num)
+    obtain ⟨s1, hs1, e21⟩ := mem 2 1 (by norm_num) (by norm_num) (by norm_num); obtain ⟨s2, hs2, e22⟩ := mem 2 2 (by norm_num) (by norm_num) (by norm_num); obtain ⟨s3, hs3, e31⟩ := mem 3 1 (by norm_num) (by norm_num) (by norm_num)
+    norm_num at hp1 hq1 hr1 e21 e22 e31
+    have ⟨hpq, hpr, hqr⟩ : p ≠ q ∧ p ≠ r ∧ q ≠ r := by refine ⟨?_, ?_, ?_⟩ <;> rintro rfl <;> linarith
+    have heq : ({p, q, r} : Finset (ℝ × ℝ)) = lines := Finset.eq_of_subset_of_card_le (fun l hl => by simp only [Finset.mem_insert, Finset.mem_singleton] at hl; rcases hl with rfl | rfl | rfl <;> assumption) (by have := Finset.card_eq_three.mpr ⟨p, q, r, hpq, hpr, hqr, rfl⟩; omega)
+    have hmem : ∀ l ∈ lines, l = p ∨ l = q ∨ l = r := fun l hl => by rw [← heq] at hl; simpa using hl
+    have hk : ∀ x ∈ lines, ∀ y ∈ lines, x ≠ y → (x.1 = 0 ∨ x.1 = -1) → (y.1 = 0 ∨ y.1 = -1) → False := fun x hx y hy hxy h1 h2 => by have hlt : 1 < (lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1)).card := Finset.one_lt_card.mpr ⟨x, Finset.mem_filter.mpr ⟨hx, h1⟩, y, Finset.mem_filter.mpr ⟨hy, h2⟩, hxy⟩; rw [h421] at hlt; omega
+    have key0 : (p.1 = 0 ∨ p.1 = -1) ∨ (q.1 = 0 ∨ q.1 = -1) ∨ (r.1 = 0 ∨ r.1 = -1) := by
+      obtain ⟨a, ha⟩ := Finset.card_eq_one.mp h421
+      obtain ⟨hal, hpa⟩ := Finset.mem_filter.mp (show a ∈ lines.filter (fun l : ℝ × ℝ => l.1 = 0 ∨ l.1 = -1) by rw [ha]; exact Finset.mem_singleton_self a)
+      rcases hmem a hal with rfl | rfl | rfl <;> first | exact Or.inl hpa | exact Or.inr (Or.inl hpa) | exact Or.inr (Or.inr hpa)
+    rcases hmem s1 hs1 with rfl | rfl | rfl <;> rcases hmem s2 hs2 with rfl | rfl | rfl <;> rcases hmem s3 hs3 with rfl | rfl | rfl <;> first | linarith | exact hk _ hp _ hq hpq (by first | (left; linarith) | (right; linarith)) (by first | (left; linarith) | (right; linarith)) | exact hk _ hp _ hr hpr (by first | (left; linarith) | (right; linarith)) (by first | (left; linarith) | (right; linarith)) | exact hk _ hq _ hr hqr (by first | (left; linarith) | (right; linarith)) (by first | (left; linarith) | (right; linarith)) | (rcases key0 with (h | h) | (h | h) | (h | h) <;> linarith)
 
 lemma round1_h1 (k : ℕ)
   (lines : Finset (ℝ × ℝ))
@@ -125,7 +100,7 @@ lemma translation_equivalence_y_axis_h_main (n k_local : ℕ)
   obtain ⟨hp1, hp2, hp3⟩ := hp
   rcases h3 (p.1, p.2 + 1) ((h2 _).2 ⟨hp1, by dsimp only; omega, by dsimp only; omega⟩) with ⟨l, hl, hl'⟩ | ⟨x, hx, hx'⟩
   · exact Or.inl ⟨(l.1, l.2 - 1), Finset.mem_image_of_mem _ hl, by push_cast at hl' ⊢; linarith⟩
-  · exact Or.inr ⟨x, hx, hx'⟩
+  grind
 
 theorem inductive_step_if_contains_horizontal_line (n k : ℕ) (verts : Finset ℝ) (lines : Finset (ℝ × ℝ)) (points : Finset (ℕ × ℕ)) (hcard : lines.card + verts.card = n) (hallpoints : ∀ p, p ∈ points ↔ p.1 ≥ 1 ∧ p.2 ≥ 1 ∧ p.1 + p.2 ≤ n + 1) (hmain : ∀ p ∈ points, (∃ l ∈ lines, l.1 * p.1 + l.2 = p.2) ∨ (∃ x ∈ verts, p.1 = x)) (hk : (lines.filter (fun l ↦ l.1 ≠ 0 ∧ l.1 ≠ -1)).card = k) (hn : n ≥ 4) (hcover : ∀ p : ℕ × ℕ, p.1 ≥ 1 ∧ p.2 ≥ 1 ∧ p.1 + p.2 ≤ n + 1 →
     (∃ l ∈ lines, l.1 * (p.1 : ℝ) + l.2 = (p.2 : ℝ)) ∨ (∃ x ∈ verts, (p.1 : ℝ) = x)) (h_has_horizontal : ∃ l ∈ lines, l.1 = 0 ∧ l.2 = 1) (h_ih : ∀ (k' : ℕ) (verts' : Finset ℝ) (lines' : Finset (ℝ × ℝ)),
@@ -230,7 +205,7 @@ lemma non_sunny_lines_cover_at_most_2_points_on_boundary_h_final (n k : ℕ)
   (Finset.filter (fun p ↦ (p.1 = 1 ∨ p.2 = 1 ∨ p.1 + p.2 = n + 1) ∧ (l.1 * p.1 + l.2 = p.2)) points).card ≤ 2 := by
   by_contra h
   obtain ⟨x, hx, y, hy, z, hz, a, b, c⟩ := Finset.two_lt_card.1 (not_le.mp h)
-  rcases h_main x y z hx hy hz with h1 | h1 | h1 <;> contradiction
+  grind
 
 lemma non_sunny_lines_cover_at_most_2_points_on_boundary_h_main (n k : ℕ)
   (verts : Finset ℝ)
@@ -256,7 +231,7 @@ lemma non_sunny_lines_cover_at_most_2_points_on_boundary_h_main (n k : ℕ)
   have hdist : ∀ P Q : ℕ × ℕ, l.1 * P.1 + l.2 = P.2 → l.1 * Q.1 + l.2 = Q.2 → P.1 = Q.1 → P = Q := by
     intro P Q hP hQ h; refine Prod.ext h ?_; have h' : (P.1:ℝ) = Q.1 := (by exact_mod_cast h); have : (P.2:ℝ) = Q.2 := (by rw [← hP, ← hQ, h']); exact_mod_cast this
   have hxy' : x.1 ≠ y.1 := (fun h => hxy (hdist x y (Finset.mem_filter.mp hx).2.2 (Finset.mem_filter.mp hy).2.2 h)); have hxz' : x.1 ≠ z.1 := (fun h => hxz (hdist x z (Finset.mem_filter.mp hx).2.2 (Finset.mem_filter.mp hz).2.2 h)); have hyz' : y.1 ≠ z.1 := (fun h => hyz (hdist y z (Finset.mem_filter.mp hy).2.2 (Finset.mem_filter.mp hz).2.2 h))
-  rcases lt_or_gt_of_ne hxy' with h1 | h1 <;> rcases lt_or_gt_of_ne hxz' with h2 | h2 <;> rcases lt_or_gt_of_ne hyz' with h3 | h3 <;> first | exact key x y z hx hy hz (by omega) (by omega) | exact key x z y hx hz hy (by omega) (by omega) | exact key y x z hy hx hz (by omega) (by omega) | exact key y z x hy hz hx (by omega) (by omega) | exact key z x y hz hx hy (by omega) (by omega) | exact key z y x hz hy hx (by omega) (by omega)
+  grind
 
 theorem non_sunny_lines_cover_at_most_2_points_on_boundary (n k : ℕ) (verts : Finset ℝ) (lines : Finset (ℝ × ℝ)) (points : Finset (ℕ × ℕ)) (hn : 3 ≤ n) (hcard : lines.card + verts.card = n) (hallpoints : ∀ p, p ∈ points ↔ p.1 ≥ 1 ∧ p.2 ≥ 1 ∧ p.1 + p.2 ≤ n + 1) (hmain : ∀ p ∈ points, (∃ l ∈ lines, l.1 * p.1 + l.2 = p.2) ∨ (∃ x ∈ verts, p.1 = x)) (hk : (lines.filter (fun l ↦ l.1 ≠ 0 ∧ l.1 ≠ -1)).card = k) (l : ℝ × ℝ) (h_non_sunny : l.1 ≠ 0 ∧ l.1 ≠ -1) :
   (Finset.filter (fun p ↦ (p.1 = 1 ∨ p.2 = 1 ∨ p.1 + p.2 = n + 1) ∧
@@ -317,8 +292,7 @@ lemma total_boundary_points_covered_by_at_most_2n_h1 (n k : ℕ)
   (h_not_y1 : ∀ l ∈ lines, ¬(l.1 = 0 ∧ l.2 = 1))
   (h_not_xn1 : ∀ l ∈ lines, ¬(l.1 = -1 ∧ l.2 = n + 1)):
   ∀ l ∈ lines, ¬ (l.1 = 0 ∧ l.2 = 1) ∧ ¬ (l.1 = -1 ∧ l.2 = n + 1) := by
-  intro l hl
-  exact ⟨h_not_y1 l hl, h_not_xn1 l hl⟩
+  grind
 
 lemma total_boundary_points_covered_by_at_most_2n_h2 (n k : ℕ)
   (verts : Finset ℝ)
@@ -343,8 +317,7 @@ lemma total_boundary_points_covered_by_at_most_2n_h3 (n k : ℕ)
   (points : Finset (ℕ × ℕ))
   (h_not_v1 : 1 ∉ verts):
   ∀ x ∈ verts, x ≠ 1 := by
-  rintro x hx rfl
-  exact h_not_v1 hx
+  grind
 
 lemma total_boundary_points_covered_by_at_most_2n_h4 (n k : ℕ)
   (verts : Finset ℝ)

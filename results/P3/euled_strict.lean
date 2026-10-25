@@ -7,19 +7,6 @@ set_option maxRecDepth 1000
 set_option tactic.hygienic false
 open BigOperators Real Nat Topology Rat Classical Polynomial
 namespace IMO2025.P3
-lemma round1_h1 (n : ℤ)
-  (k : ℕ)
-  (hn : n > 0)
-  (h_k_le_2_plus_padic : k ≤ 2 + padicValNat 2 n.toNat):
-  (2 : ℤ) ^ k ≤ (2 : ℤ) ^ (2 + padicValNat 2 n.toNat) := by
-  gcongr <;> norm_num
-
-lemma round1_h2 (n : ℤ)
-  (k : ℕ)
-  (hn : n > 0):
-  (2 : ℤ) ^ (2 + padicValNat 2 n.toNat) = 4 * (2 : ℤ) ^ (padicValNat 2 n.toNat) := by
-  ring
-
 lemma round1_h4 (n : ℤ)
   (k : ℕ)
   (hn : n > 0):
@@ -49,8 +36,9 @@ lemma round1_h_main (n : ℤ)
   linarith
 
 lemma round1_h6' (n : ℤ) (f : ℤ → ℤ) (hn : n > 0) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) (k : ℕ) (hk : f n = (2 : ℤ) ^ k) (h_k_le_2_plus_padic : k ≤ 2 + padicValNat 2 n.toNat) : f n ≤ 4 * n := by
-  rw [hk]
-  linarith [round1_h1 n k hn h_k_le_2_plus_padic, round1_h2 n k hn, round1_h5 n k hn (round1_h4 n k hn)]
+  have h2 : (2 : ℤ) ^ (2 + padicValNat 2 n.toNat) = 4 * (2 : ℤ) ^ (padicValNat 2 n.toNat) := by ring
+  have h1 : (2 : ℤ) ^ k ≤ (2 : ℤ) ^ (2 + padicValNat 2 n.toNat) := by gcongr <;> norm_num
+  linarith [h1, h2, round1_h5 n k hn (round1_h4 n k hn)]
 
 lemma lte_2_3n_minus_1_lemma1 (k : ℕ) (hk_pos : k > 0) (hk_odd : k % 2 = 1) : padicValNat 2 (3 ^ k - 1) = 1 := by
   obtain ⟨n, rfl⟩ : ∃ n, k = 2 * n + 1 := ⟨k / 2, by omega⟩
@@ -66,7 +54,6 @@ lemma lte_2_3n_minus_1_lemma2 (k : ℕ) (hk_pos : k > 0) (hk_even : k % 2 = 0) :
   norm_num [show padicValNat 2 4 = 2 by simpa using padicValNat.prime_pow (p := 2) 2, padicValNat_self] at h; omega
 
 theorem lte_2_3n_minus_1 (n : ℤ) (hn : n > 0) : padicValNat 2 (3 ^ n.toNat - 1) = if n % 2 = 1 then 1 else 2 + padicValNat 2 n.toNat := by
-  have hk : (n.toNat : ℤ) = n := Int.toNat_of_nonneg hn.le
   split_ifs with h
   · exact lte_2_3n_minus_1_lemma1 n.toNat (by omega) (by omega)
   · exact lte_2_3n_minus_1_lemma2 n.toNat (by omega) (by omega)
@@ -96,8 +83,7 @@ lemma round1_h_subcase1 (n : ℤ)
   (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat)
   (h_subcase1 : ∀ k : ℤ, k > 0 → f k = k):
   f n ≤ 4 * n := by
-  rw [h_subcase1 n hn]
-  omega
+  grind
 
 theorem  f_b_equiv_b_mod_p_of_f_p_ne_1 (n : ℤ) (f : ℤ → ℤ) (hn : n > 0) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) (p : ℤ) (hp : Nat.Prime p.toNat) (hfp_ne_1 : f p ≠ 1):
   ∀ b : ℤ, b > 0 → b ≡ f b [ZMOD p] := by
@@ -141,7 +127,6 @@ lemma f_is_not_identity_implies_f_p_eq_1_for_p_gt_2_h_main (n : ℤ)
   by_contra h
   have hp0_two := Nat.Prime.two_le hp0_prime
   have h3 := f_b_equiv_b_mod_p_of_f_p_ne_1 n f hn hpos hf p hp_prime h p0 (by omega)
-  rw [hfp0_eq_1] at h3
   have h5 := Int.le_of_dvd (by omega) (Int.modEq_iff_dvd.mp h3.symm)
   omega
 
@@ -227,7 +212,7 @@ lemma prime_divisor_of_fa_divides_fx_minus_x_h11 (n : ℤ)
   (hdiv : p ∣ f a)
   (h10 : ∀ (b : ℤ), b > 0 → b ≡ f b [ZMOD p]):
   x ≡ f x [ZMOD p] := by
-  exact h10 x hx
+  grind
 
 lemma prime_divisor_of_fa_divides_fx_minus_x_h13 (n : ℤ)
   (f : ℤ → ℤ)

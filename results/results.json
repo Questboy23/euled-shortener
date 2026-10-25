@@ -4,9 +4,9 @@
   "paper_original": 36478,
   "paper_proofoptimizer": 20506,
   "original": 36438,
-  "euled": 6090,
+  "euled": 5924,
   "original_strict": 48824,
-  "euled_strict": 11934
+  "euled_strict": 11450
  },
  {
   "problem": "P3",
@@ -15,7 +15,7 @@
   "original": 16341,
   "euled": 2569,
   "original_strict": 20268,
-  "euled_strict": 5523
+  "euled_strict": 5439
  },
  {
   "problem": "P4",
