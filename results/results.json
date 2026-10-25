@@ -12,10 +12,10 @@
   "problem": "P3",
   "paper_original": 16377,
   "paper_proofoptimizer": 7907,
-  "original": null,
-  "euled": null,
-  "original_strict": null,
-  "euled_strict": null
+  "original": 16341,
+  "euled": 2718,
+  "original_strict": 20268,
+  "euled_strict": 5673
  },
  {
   "problem": "P4",
