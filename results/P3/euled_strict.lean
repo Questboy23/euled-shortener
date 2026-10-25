@@ -10,7 +10,9 @@ namespace IMO2025.P3
 lemma round1_h4 (n : ℤ)
   (k : ℕ)
   (hn : n > 0):
-  (2 : ℤ) ^ (padicValNat 2 n.toNat) ∣ n := by (conv_rhs => rw [← Int.toNat_of_nonneg hn.le]); exact_mod_cast pow_padicValNat_dvd (p := 2) (n := n.toNat)
+  (2 : ℤ) ^ (padicValNat 2 n.toNat) ∣ n := by
+  lift n to ℕ using hn.le
+  exact_mod_cast pow_padicValNat_dvd
 
 lemma round1_h5 (n : ℤ)
   (k : ℕ)
@@ -53,10 +55,7 @@ lemma lte_2_3n_minus_1_lemma2 (k : ℕ) (hk_pos : k > 0) (hk_even : k % 2 = 0) :
   have h := padicValNat.pow_two_sub_pow (x := 3) (y := 1) (by norm_num) (by norm_num) (by norm_num) (by omega) (Nat.even_iff.mpr hk_even)
   norm_num [show padicValNat 2 4 = 2 by simpa using padicValNat.prime_pow (p := 2) 2, padicValNat_self] at h; omega
 
-theorem lte_2_3n_minus_1 (n : ℤ) (hn : n > 0) : padicValNat 2 (3 ^ n.toNat - 1) = if n % 2 = 1 then 1 else 2 + padicValNat 2 n.toNat := by
-  split_ifs with h
-  · exact lte_2_3n_minus_1_lemma1 n.toNat (by omega) (by omega)
-  · exact lte_2_3n_minus_1_lemma2 n.toNat (by omega) (by omega)
+theorem lte_2_3n_minus_1 (n : ℤ) (hn : n > 0) : padicValNat 2 (3 ^ n.toNat - 1) = if n % 2 = 1 then 1 else 2 + padicValNat 2 n.toNat := by split_ifs with h <;> [exact lte_2_3n_minus_1_lemma1 n.toNat (by omega) (by omega); exact lte_2_3n_minus_1_lemma2 n.toNat (by omega) (by omega)]
 
 lemma round1_h_k_le_padic (n : ℤ)
   (f : ℤ → ℤ)
@@ -87,25 +86,31 @@ lemma round1_h_subcase1 (n : ℤ)
 
 theorem  f_b_equiv_b_mod_p_of_f_p_ne_1 (n : ℤ) (f : ℤ → ℤ) (hn : n > 0) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) (p : ℤ) (hp : Nat.Prime p.toNat) (hfp_ne_1 : f p ≠ 1):
   ∀ b : ℤ, b > 0 → b ≡ f b [ZMOD p] := by
-  intro b hb; have hp0 : (0:ℤ) < p := (by have := hp.two_le; omega); have hfp0 : (0:ℤ) < f p := hpos p hp0; have hfq : f p = ((f p).toNat : ℤ) := (Int.toNat_of_nonneg hfp0.le).symm; have hpq : p = (p.toNat : ℤ) := (Int.toNat_of_nonneg hp0.le).symm
-  haveI := Fact.mk hp; haveI : NeZero p.toNat := ⟨hp.ne_zero⟩; have h3 : f p ∣ p ^ p.toNat := (by have := dvd_add (hf p p hp0 hp0) (dvd_pow_self (f p) (by omega : (f p).toNat ≠ 0)); rwa [sub_add_cancel] at this)
-  obtain ⟨i, -, hqi⟩ := (Nat.dvd_prime_pow hp).1 (Int.natCast_dvd_natCast.mp (by rw [← hfq, Nat.cast_pow, ← hpq]; exact h3) : (f p).toNat ∣ p.toNat ^ p.toNat)
-  have hi0 : i ≠ 0 := by rintro rfl; exact hfp_ne_1 (by have : (f p).toNat = 1 := (by simpa using hqi); omega)
-  have hPf : (p.toNat : ℤ) ∣ f p := by rw [hfq]; exact Int.natCast_dvd_natCast.mpr (by rw [hqi]; exact dvd_pow_self _ hi0)
-  have key : ((f b : ℤ) : ZMod p.toNat) = (b : ZMod p.toNat) := by have hz := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr (hPf.trans (hf p b hp0 hb)); push_cast at hz; rw [sub_eq_zero, ZMod.pow_card, hqi, ZMod.pow_card_pow] at hz; exact hz.symm
-  rw [Int.modEq_iff_dvd, hpq, ← ZMod.intCast_zmod_eq_zero_iff_dvd, Int.cast_sub, key, sub_self]
+  have hp0 : 0 < p := by have := hp.two_le; omega
+  have hpe : (p.toNat : ℤ) = p := Int.toNat_of_nonneg hp0.le
+  have hq : ((f p).toNat : ℤ) = f p := Int.toNat_of_nonneg (hpos p hp0).le
+  have hne : (f p).toNat ≠ 0 := by have := hpos p hp0; omega
+  have h1 : f p ∣ p ^ p.toNat := by have := dvd_add (hf p p hp0 hp0) (dvd_pow_self (f p) hne); rwa [sub_add_cancel] at this
+  have h3 : ((f p).toNat : ℤ) ∣ ((p.toNat ^ p.toNat : ℕ) : ℤ) := by rw [Nat.cast_pow, hq, hpe]; exact h1
+  obtain ⟨m, -, hqm⟩ := (Nat.dvd_prime_pow hp).mp (Int.natCast_dvd_natCast.mp h3)
+  have hm0 : m ≠ 0 := by rintro rfl; apply hfp_ne_1; rw [← hq, hqm]; simp
+  have hpd : (p.toNat : ℤ) ∣ f p := by rw [← hq, hqm, Nat.cast_pow]; exact dvd_pow_self _ hm0
+  haveI := Fact.mk hp
+  intro b hb
+  rw [← hpe, Int.modEq_iff_dvd, ← ZMod.intCast_zmod_eq_zero_iff_dvd]
+  have hz := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr (dvd_trans hpd (hf p b hp0 hb))
+  push_cast at hz
+  rw [hqm, ZMod.pow_card_pow, ZMod.pow_card, sub_eq_zero] at hz
+  push_cast
+  rw [hz, sub_self]
 
 lemma f_is_not_identity_implies_f_p_eq_1_for_p_gt_2_case2 (f : ℤ → ℤ) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) (k : ℤ) (hk_pos : k > 0) (hf_not_id : ∃ i > 0, f i ≠ i) : ∃ p, Nat.Prime p.toNat ∧ p > k ∧ f p = 1 := by
-  obtain ⟨i₀, hi₀, hne⟩ := hf_not_id
-  by_contra! h
-  obtain ⟨q, hqp, hq⟩ := Nat.exists_infinite_primes (k + i₀ + f i₀ + 1).toNat
-  have hc : k + i₀ + f i₀ + 1 ≤ (q:ℤ) := le_trans (Int.self_le_toNat _) (by exact_mod_cast hqp)
-  have h7 : (q:ℤ) ∣ i₀ - f i₀ := Int.ModEq.dvd (by simpa using (f_b_equiv_b_mod_p_of_f_p_ne_1 (q:ℤ) f (by linarith [hpos i₀ hi₀]) hpos hf (q:ℤ) (by simpa using hq) (h (q:ℤ) (by simpa using hq) (by linarith [hpos i₀ hi₀]))) i₀ hi₀ : i₀ ≡ f i₀ [ZMOD (q:ℤ)]).symm
-  exact hne (by linarith [Int.eq_zero_of_abs_lt_dvd h7 (abs_lt.mpr ⟨by linarith [hpos i₀ hi₀], by linarith [hpos i₀ hi₀]⟩)])
+  obtain ⟨i₀, hi₀, hne⟩ := hf_not_id; by_contra! h; obtain ⟨q, hqp, hq⟩ := Nat.exists_infinite_primes (k + i₀ + f i₀ + 1).toNat
+  have hc : k + i₀ + f i₀ + 1 ≤ (q:ℤ) := le_trans (Int.self_le_toNat _) (by exact_mod_cast hqp); have hp := hpos i₀ hi₀; have h7 : (q:ℤ) ∣ i₀ - f i₀ := Int.ModEq.dvd (by simpa using (f_b_equiv_b_mod_p_of_f_p_ne_1 (q:ℤ) f (by linarith) hpos hf (q:ℤ) (by simpa using hq) (h (q:ℤ) (by simpa using hq) (by linarith))) i₀ hi₀ : i₀ ≡ f i₀ [ZMOD (q:ℤ)]).symm
+  exact hne (by linarith [Int.eq_zero_of_abs_lt_dvd h7 (abs_lt.mpr ⟨by linarith, by linarith⟩)])
 
 lemma f_is_not_identity_implies_f_p_eq_1_for_p_gt_2_case1 (f : ℤ → ℤ) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) (k : ℤ) (hk_pos : k > 0) (h11 : ∀ k : ℤ, k > 0 → f k = 1) : ∃ p, Nat.Prime p.toNat ∧ p > k ∧ f p = 1 := by
-  obtain ⟨q, hq1, hq2⟩ := Nat.exists_infinite_primes (k.toNat + 1)
-  exact ⟨q, by simpa using hq2, by omega, h11 q (by omega)⟩
+  obtain ⟨p, hp1, hp2⟩ := Nat.exists_infinite_primes (k.natAbs + 1); exact ⟨p, hp2, by omega, h11 p (by omega)⟩
 
 theorem f_is_not_identity_implies_f_p_eq_1_for_some_p_gt_k (f : ℤ → ℤ) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) (k : ℤ) (hk_pos : k > 0) (hf_not_id : ∃ i > 0, f i ≠ i):
   ∃ p, Nat.Prime p.toNat ∧ p > k ∧ f p = 1 := by
@@ -125,7 +130,7 @@ lemma f_is_not_identity_implies_f_p_eq_1_for_p_gt_2_h_main (n : ℤ)
   ∀ (p : ℤ), Nat.Prime p.toNat → p ≥ p0 → f p = 1 := by
   intro p hp_prime hp_ge_p0
   by_contra h
-  have hp0_two := Nat.Prime.two_le hp0_prime
+  have := Nat.Prime.two_le hp0_prime
   have h3 := f_b_equiv_b_mod_p_of_f_p_ne_1 n f hn hpos hf p hp_prime h p0 (by omega)
   have h5 := Int.le_of_dvd (by omega) (Int.modEq_iff_dvd.mp h3.symm)
   omega
@@ -138,16 +143,10 @@ lemma f_is_not_identity_implies_f_p_eq_1_for_p_gt_2_main (n : ℤ) (f : ℤ → 
   intro h_f_not_id p hp_prime hp_gt_2; by_contra hfp_ne_1; rcases imo2025_p3_subproblem_f1_is_1_or_f_is_const_1 f hpos hf with h_const | h_f1
   · exact hfp_ne_1 (h_const p (by omega))
   obtain ⟨p0, hp0_prime, hp0_gt_p, hfp0_eq_1⟩ := f_is_not_identity_implies_f_p_eq_1_for_some_p_gt_k f hpos hf p (by omega) h_f_not_id
-  have h_exists_k : ∃ k : ℤ, k > 1 ∧ f k ≠ k := by obtain ⟨m, hm0, hfm⟩ := h_f_not_id; rcases (show m = 1 ∨ m > 1 by omega) with rfl | hm; exacts [absurd h_f1 hfm, ⟨m, hm, hfm⟩]
-  have h_forall : ∀ q : ℤ, Nat.Prime q.toNat → q ≥ p0 → f q = 1 := f_is_1_on_all_primes_ge_p0_if_f_p0_eq_1_and_f_is_not_const_1 n f hn hpos hf h_exists_k hp0_prime hfp0_eq_1 ⟨p, by omega, hfp_ne_1⟩
-  have h_b_equiv := f_b_equiv_b_mod_p_of_f_p_ne_1 n f hn hpos hf p hp_prime hfp_ne_1
-  have hpz : (p.toNat : ℤ) = p := Int.toNat_of_nonneg (by omega); haveI : Fact (Nat.Prime p.toNat) := ⟨hp_prime⟩; haveI : NeZero p.toNat := ⟨by omega⟩
-  have h2_unit : IsUnit (2 : ZMod p.toNat) := by rw [isUnit_iff_ne_zero]; intro h6; have := Nat.le_of_dvd (by norm_num) ((ZMod.natCast_zmod_eq_zero_iff_dvd 2 p.toNat).mp (by exact_mod_cast h6)); omega
-  obtain ⟨q, hq1, hq2, hq3⟩ := Nat.forall_exists_prime_gt_and_eq_mod h2_unit p0.toNat
-  have h15 : f (q : ℤ) = 1 := h_forall (q : ℤ) (by simpa using hq2) (by omega); have h14 : (q : ℤ) ≡ 1 [ZMOD p] := by have := h_b_equiv (q : ℤ) (by omega); rwa [h15] at this
-  have hA : p ∣ (q : ℤ) - 1 := h14.symm.dvd; have hmod : q % p.toNat = 2 % p.toNat := (ZMod.natCast_eq_natCast_iff' q 2 p.toNat).mp (by exact_mod_cast hq3)
-  have h8 : p ∣ 1 := by have h7 : p ∣ (q : ℤ) - 2 := (by rw [← hpz, show (q : ℤ) - 2 = ((q - 2 : ℕ) : ℤ) by omega]; exact Int.natCast_dvd_natCast.mpr (Nat.dvd_of_mod_eq_zero (Nat.sub_mod_eq_zero_of_mod_eq hmod))); have := dvd_sub hA h7; rwa [show (q : ℤ) - 1 - ((q : ℤ) - 2) = 1 by ring] at this
-  have := Int.le_of_dvd (by norm_num) h8; omega
+  have h_forall : ∀ q : ℤ, Nat.Prime q.toNat → q ≥ p0 → f q = 1 := f_is_1_on_all_primes_ge_p0_if_f_p0_eq_1_and_f_is_not_const_1 n f hn hpos hf (by obtain ⟨m, hm0, hfm⟩ := h_f_not_id; rcases (show m = 1 ∨ m > 1 by omega) with rfl | hm; exacts [absurd h_f1 hfm, ⟨m, hm, hfm⟩]) hp0_prime hfp0_eq_1 ⟨p, by omega, hfp_ne_1⟩
+  have h_b_equiv := f_b_equiv_b_mod_p_of_f_p_ne_1 n f hn hpos hf p hp_prime hfp_ne_1; have hpz : (p.toNat : ℤ) = p := Int.toNat_of_nonneg (by omega); haveI : Fact (Nat.Prime p.toNat) := ⟨hp_prime⟩; haveI : NeZero p.toNat := ⟨by omega⟩; have h2_unit : IsUnit (2 : ZMod p.toNat) := (by rw [isUnit_iff_ne_zero]; intro h6; have := Nat.le_of_dvd (by norm_num) ((ZMod.natCast_zmod_eq_zero_iff_dvd 2 p.toNat).mp (by exact_mod_cast h6)); omega)
+  obtain ⟨q, hq1, hq2, hq3⟩ := Nat.forall_exists_prime_gt_and_eq_mod h2_unit p0.toNat; have h15 : f (q : ℤ) = 1 := h_forall (q : ℤ) (by simpa using hq2) (by omega); have h14 : (q : ℤ) ≡ 1 [ZMOD p] := (by have := h_b_equiv (q : ℤ) (by omega); rwa [h15] at this); have hA : p ∣ (q : ℤ) - 1 := h14.symm.dvd; have hmod : q % p.toNat = 2 % p.toNat := (ZMod.natCast_eq_natCast_iff' q 2 p.toNat).mp (by exact_mod_cast hq3)
+  have h8 : p ∣ 1 := (by have h7 : p ∣ (q : ℤ) - 2 := (by rw [← hpz, show (q : ℤ) - 2 = ((q - 2 : ℕ) : ℤ) by omega]; exact Int.natCast_dvd_natCast.mpr (Nat.dvd_of_mod_eq_zero (Nat.sub_mod_eq_zero_of_mod_eq hmod))); have := dvd_sub hA h7; rwa [show (q : ℤ) - 1 - ((q : ℤ) - 2) = 1 by ring] at this); have := Int.le_of_dvd (by norm_num) h8; omega
 
 theorem f_is_not_identity_implies_f_p_eq_1_for_p_gt_2 (n : ℤ) (f : ℤ → ℤ) (hn : n > 0) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat):
   (∃ n : ℤ, n > 0 ∧ f n ≠ n) → ∀ p : ℤ, Nat.Prime p.toNat → p > 2 → f p = 1 := by
@@ -182,8 +181,7 @@ lemma prime_divisor_of_fa_divides_fx_minus_x_h2 (n : ℤ)
   intro h
   have h3 := hf a p ha (by omega)
   rw [h, one_pow] at h3
-  have h4 := Int.le_of_dvd one_pos (by simpa using dvd_sub (dvd_pow_self p (by omega : a.toNat ≠ 0)) (dvd_trans hdiv h3))
-  omega
+  have := Int.le_of_dvd one_pos (by simpa using dvd_sub (dvd_pow_self p (by omega : a.toNat ≠ 0)) (dvd_trans hdiv h3)); omega
 
 lemma prime_divisor_of_fa_divides_fx_minus_x_h10 (n : ℤ)
   (f : ℤ → ℤ)
@@ -243,10 +241,10 @@ lemma f_n_is_power_of_two_for_even_n_h1 (n : ℤ)
   (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat)
   (h_exists_k : ∃ k : ℤ, k > 1 ∧ f k ≠ k):
   ∀ (q : ℤ), Nat.Prime q.toNat → q ∣ f n → q = 2 := by
-  intro q hq_prime hq_dvd; by_contra hq; obtain ⟨k, hk1, hk2⟩ := h_exists_k
-  have hq2 : q > 2 := by have := hq_prime.two_le; omega
+  intro q hq_prime hq_dvd
+  by_contra hq; obtain ⟨k, hk1, hk2⟩ := h_exists_k; have := hq_prime.two_le
   have h5 := prime_divisor_of_fa_divides_fx_minus_x n f hn hpos hf n q q hn (by omega) hq_prime hq_dvd
-  rw [f_is_not_identity_implies_f_p_eq_1_for_p_gt_2 n f hn hpos hf ⟨k, by omega, hk2⟩ q hq_prime hq2] at h5
+  rw [f_is_not_identity_implies_f_p_eq_1_for_p_gt_2 n f hn hpos hf ⟨k, by omega, hk2⟩ q hq_prime (by omega)] at h5
   have := Int.le_of_dvd one_pos (show q ∣ 1 by simpa using dvd_add h5 (dvd_refl q))
   omega
 
@@ -258,7 +256,8 @@ lemma f_n_is_power_of_two_for_even_n_main (n : ℤ)
   (h_exists_k : ∃ k : ℤ, k > 1 ∧ f k ≠ k):
   ∃ k : ℕ, f n = 2 ^ k := by
   have hp := hpos n hn
-  obtain ⟨k, hk⟩ := f_n_is_power_of_two_for_even_n_h10 (f n).toNat (by omega) fun p hp' hd => by exact_mod_cast f_n_is_power_of_two_for_even_n_h1 n f hn hpos hf h_exists_k p (by simpa using hp') (by rw [← Int.toNat_of_nonneg hp.le]; exact_mod_cast hd)
+  obtain ⟨k, hk⟩ := f_n_is_power_of_two_for_even_n_h10 (f n).toNat (by omega) fun p hp' hd => by
+    exact_mod_cast f_n_is_power_of_two_for_even_n_h1 n f hn hpos hf h_exists_k p (by simpa using hp') (by rw [← Int.toNat_of_nonneg hp.le]; exact_mod_cast hd)
   exact ⟨k, by rw [← Int.toNat_of_nonneg hp.le, hk]; norm_cast⟩
 
 theorem f_n_is_power_of_two_for_even_n (n : ℤ) (f : ℤ → ℤ) (hn : n > 0) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) (h_exists_k : ∃ k : ℤ, k > 1 ∧ f k ≠ k) :
@@ -270,9 +269,15 @@ lemma round1_h_main' (n : ℤ) (f : ℤ → ℤ) (hn : n > 0) (hpos : ∀ k : �
   · linarith [h1 n hn]
   by_cases h2 : ∀ k : ℤ, k > 0 → f k = k
   · exact round1_h_subcase1 n f hn hpos hf h2
-  push_neg at h2; obtain ⟨k, hk, hne⟩ := h2; have h5 : k ≠ 1 := fun h => hne (by rw [h]; exact h1)
-  have h9 : f 3 = 1 := (f_is_not_identity_implies_f_p_eq_1_for_p_gt_2 n f hn hpos hf ⟨k, by omega, hne⟩) 3 (by decide) (by norm_num); have h10 := hf n 3 hn (by norm_num); rw [h9, one_pow] at h10
-  obtain ⟨j, hj⟩ := f_n_is_power_of_two_for_even_n n f hn hpos hf ⟨k, by omega, hne⟩; have h14 := round1_h_k_le_padic n f j hn hpos hf (by rw [← hj]; exact h10); rw [lte_2_3n_minus_1 n hn] at h14
+  push_neg at h2
+  obtain ⟨k, hk, hne⟩ := h2
+  have h5 : k ≠ 1 := fun h => hne (by rw [h]; exact h1)
+  have h9 : f 3 = 1 := (f_is_not_identity_implies_f_p_eq_1_for_p_gt_2 n f hn hpos hf ⟨k, by omega, hne⟩) 3 (by decide) (by norm_num)
+  have h10 := hf n 3 hn (by norm_num)
+  rw [h9, one_pow] at h10
+  obtain ⟨j, hj⟩ := f_n_is_power_of_two_for_even_n n f hn hpos hf ⟨k, by omega, hne⟩
+  have h14 := round1_h_k_le_padic n f j hn hpos hf (by rw [← hj]; exact h10)
+  rw [lte_2_3n_minus_1 n hn] at h14
   exact round1_h6' n f hn hpos hf j hj (by split_ifs at h14 <;> omega)
 
 theorem imo2025_p3_left (n : ℤ) (f : ℤ → ℤ) (hn : n > 0) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) : f n ≤ 4 * n := by
