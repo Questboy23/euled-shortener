@@ -23,8 +23,7 @@ lemma round1_h2 (n : ℤ)
 lemma round1_h4 (n : ℤ)
   (k : ℕ)
   (hn : n > 0):
-  (2 : ℤ) ^ (padicValNat 2 n.toNat) ∣ n := by
-  simpa [Int.toNat_of_nonneg hn.le] using Int.natCast_dvd_natCast.mpr (pow_padicValNat_dvd (p := 2) (n := n.toNat))
+  (2 : ℤ) ^ (padicValNat 2 n.toNat) ∣ n := by (conv_rhs => rw [← Int.toNat_of_nonneg hn.le]); exact_mod_cast pow_padicValNat_dvd (p := 2) (n := n.toNat)
 
 lemma round1_h5 (n : ℤ)
   (k : ℕ)
@@ -67,23 +66,10 @@ lemma lte_2_3n_minus_1_lemma2 (k : ℕ) (hk_pos : k > 0) (hk_even : k % 2 = 0) :
   norm_num [show padicValNat 2 4 = 2 by simpa using padicValNat.prime_pow (p := 2) 2, padicValNat_self] at h; omega
 
 theorem lte_2_3n_minus_1 (n : ℤ) (hn : n > 0) : padicValNat 2 (3 ^ n.toNat - 1) = if n % 2 = 1 then 1 else 2 + padicValNat 2 n.toNat := by
-  have hpos : n.toNat > 0 := by omega
-  have h_main : padicValNat 2 (3 ^ n.toNat - 1) = if n % 2 = 1 then 1 else 2 + padicValNat 2 n.toNat := by
-    split_ifs <;>
-    (try {
-      have h₁ : n.toNat % 2 = 1 := by
-        have h₂ : (n.toNat : ℤ) = n := by simp [Int.toNat_of_nonneg (by linarith : (0 : ℤ) ≤ n)]
-        omega
-      rw [lte_2_3n_minus_1_lemma1 n.toNat hpos h₁]
-    }) <;>
-    (try {
-      have h₁ : n % 2 = 0 := by omega
-      have h₂ : n.toNat % 2 = 0 := by
-        have h₃ : (n.toNat : ℤ) = n := by simp [Int.toNat_of_nonneg (by linarith : (0 : ℤ) ≤ n)]
-        omega
-      rw [lte_2_3n_minus_1_lemma2 n.toNat hpos h₂]
-    })
-  rw [h_main]
+  have hk : (n.toNat : ℤ) = n := Int.toNat_of_nonneg hn.le
+  split_ifs with h
+  · exact lte_2_3n_minus_1_lemma1 n.toNat (by omega) (by omega)
+  · exact lte_2_3n_minus_1_lemma2 n.toNat (by omega) (by omega)
 
 lemma round1_h_k_le_padic (n : ℤ)
   (f : ℤ → ℤ)
@@ -94,10 +80,7 @@ lemma round1_h_k_le_padic (n : ℤ)
   (h_2_pow_k_divides : (2 : ℤ) ^ k ∣ 3 ^ n.toNat - 1):
   k ≤ padicValNat 2 (3 ^ n.toNat - 1) := by
   have h4 : 3 ≤ 3 ^ n.toNat := Nat.le_self_pow (by omega) 3
-  have h3 : 2 ^ k ∣ 3 ^ n.toNat - 1 := by
-    zify [show 1 ≤ 3 ^ n.toNat by omega]
-    exact h_2_pow_k_divides
-  exact (padicValNat_dvd_iff_le (by omega)).mp h3
+  exact (padicValNat_dvd_iff_le (by omega)).mp (by zify [show 1 ≤ 3 ^ n.toNat by omega]; exact h_2_pow_k_divides)
 
 lemma round1_main (f : ℤ → ℤ) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) : f 1 = 1 := by
   exact Int.eq_one_of_dvd_one (hpos 1 one_pos).le (by simpa using dvd_add (hf 1 1 one_pos one_pos) (dvd_pow_self (f 1) (show (f 1).toNat ≠ 0 by have := hpos 1 one_pos; omega)))
@@ -214,7 +197,7 @@ lemma prime_divisor_of_fa_divides_fx_minus_x_h2 (n : ℤ)
   intro h
   have h3 := hf a p ha (by omega)
   rw [h, one_pow] at h3
-  have h4 : p ≤ 1 := Int.le_of_dvd one_pos (by simpa using dvd_sub (dvd_pow_self p (by omega : a.toNat ≠ 0)) (dvd_trans hdiv h3))
+  have h4 := Int.le_of_dvd one_pos (by simpa using dvd_sub (dvd_pow_self p (by omega : a.toNat ≠ 0)) (dvd_trans hdiv h3))
   omega
 
 lemma prime_divisor_of_fa_divides_fx_minus_x_h10 (n : ℤ)
@@ -229,7 +212,7 @@ lemma prime_divisor_of_fa_divides_fx_minus_x_h10 (n : ℤ)
   (hdiv : p ∣ f a)
   (h2 : f p ≠ 1):
   ∀ (b : ℤ), b > 0 → b ≡ f b [ZMOD p] := by
-  intro b hb
+  -- unverified: Lean not run here; signature of f_b_equiv_b_mod_p_of_f_p_ne_1 assumed
   apply f_b_equiv_b_mod_p_of_f_p_ne_1 <;> assumption
 
 lemma prime_divisor_of_fa_divides_fx_minus_x_h11 (n : ℤ)
@@ -275,13 +258,12 @@ lemma f_n_is_power_of_two_for_even_n_h1 (n : ℤ)
   (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat)
   (h_exists_k : ∃ k : ℤ, k > 1 ∧ f k ≠ k):
   ∀ (q : ℤ), Nat.Prime q.toNat → q ∣ f n → q = 2 := by
-  intro q hq_prime hq_dvd; by_contra hq
-  obtain ⟨k, hk1, hk2⟩ := h_exists_k
+  intro q hq_prime hq_dvd; by_contra hq; obtain ⟨k, hk1, hk2⟩ := h_exists_k
   have hq2 : q > 2 := by have := hq_prime.two_le; omega
   have h5 := prime_divisor_of_fa_divides_fx_minus_x n f hn hpos hf n q q hn (by omega) hq_prime hq_dvd
   rw [f_is_not_identity_implies_f_p_eq_1_for_p_gt_2 n f hn hpos hf ⟨k, by omega, hk2⟩ q hq_prime hq2] at h5
-  have h6 : q ∣ 1 := by simpa using dvd_add h5 (dvd_refl q)
-  have := Int.le_of_dvd one_pos h6; omega
+  have := Int.le_of_dvd one_pos (show q ∣ 1 by simpa using dvd_add h5 (dvd_refl q))
+  omega
 
 lemma f_n_is_power_of_two_for_even_n_main (n : ℤ)
   (f : ℤ → ℤ)
@@ -290,9 +272,8 @@ lemma f_n_is_power_of_two_for_even_n_main (n : ℤ)
   (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat)
   (h_exists_k : ∃ k : ℤ, k > 1 ∧ f k ≠ k):
   ∃ k : ℕ, f n = 2 ^ k := by
-  have h1 := f_n_is_power_of_two_for_even_n_h1 n f hn hpos hf h_exists_k
   have hp := hpos n hn
-  obtain ⟨k, hk⟩ := f_n_is_power_of_two_for_even_n_h10 (f n).toNat (by omega) fun p hp' hd => by exact_mod_cast h1 p (by simpa using hp') (by rw [← Int.toNat_of_nonneg hp.le]; exact_mod_cast hd)
+  obtain ⟨k, hk⟩ := f_n_is_power_of_two_for_even_n_h10 (f n).toNat (by omega) fun p hp' hd => by exact_mod_cast f_n_is_power_of_two_for_even_n_h1 n f hn hpos hf h_exists_k p (by simpa using hp') (by rw [← Int.toNat_of_nonneg hp.le]; exact_mod_cast hd)
   exact ⟨k, by rw [← Int.toNat_of_nonneg hp.le, hk]; norm_cast⟩
 
 theorem f_n_is_power_of_two_for_even_n (n : ℤ) (f : ℤ → ℤ) (hn : n > 0) (hpos : ∀ k : ℤ, k > 0 → f k > 0) (hf : ∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) (h_exists_k : ∃ k : ℤ, k > 1 ∧ f k ≠ k) :
@@ -314,28 +295,14 @@ theorem imo2025_p3_left (n : ℤ) (f : ℤ → ℤ) (hn : n > 0) (hpos : ∀ k :
 
 theorem imo2025_p3_right : ∃ (n : ℤ) (f : ℤ → ℤ), (n > 0) ∧ (∀ k : ℤ, k > 0 → f k > 0) ∧ (∀ a b : ℤ, a > 0 → b > 0 → f a ∣ b ^ a.toNat - (f b) ^ (f a).toNat) ∧ (f n ≥ 4 * n) := by
   obtain ⟨f, hf⟩ : ∃ f : ℤ → ℤ, ∀ k, f k = if k = 4 then 16 else if k % 2 = 1 then 1 else 2 := ⟨_, fun k => rfl⟩
-  have hfour : f 4 = 16 := by simp [hf]
-  have hodd : ∀ k, k % 2 = 1 → f k = 1 := fun k hk => by rw [hf, if_neg (show k ≠ 4 by omega), if_pos hk]
-  have heven : ∀ k, k % 2 = 0 → k ≠ 4 → f k = 2 := fun k hk h => by rw [hf, if_neg h, if_neg (show ¬ (k % 2 = 1) by omega)]
-  refine ⟨4, f, by norm_num, fun k _ => (by rw [hf]; split_ifs <;> norm_num), ?_, by norm_num [hfour]⟩
-  intro a b ha hb
-  by_cases h4 : a = 4
-  · subst h4; rw [hfour, show (4 : ℤ).toNat = 4 from rfl, show (16 : ℤ).toNat = 16 from rfl]
-    rcases (by omega : b % 2 = 0 ∨ b % 2 = 1) with hb2 | hb2
-    · by_cases hb4 : b = 4
-      · subst hb4; norm_num [hfour]
-      · obtain ⟨c, rfl⟩ : ∃ c, b = 2 * c := ⟨b / 2, by omega⟩
-        rw [heven _ hb2 hb4]
-        exact ⟨c ^ 4 - 2 ^ 12, by ring⟩
-    · rw [hodd b hb2, one_pow]
-      have hm : b ^ 4 % 16 = 1 := by rcases (by omega : b % 16 = 1 ∨ b % 16 = 3 ∨ b % 16 = 5 ∨ b % 16 = 7 ∨ b % 16 = 9 ∨ b % 16 = 11 ∨ b % 16 = 13 ∨ b % 16 = 15) with h | h | h | h | h | h | h | h <;> simp [pow_succ, Int.mul_emod, h]
-      omega
-  rcases (by omega : a % 2 = 0 ∨ a % 2 = 1) with ha2 | ha2
-  · rw [heven a ha2 h4, show (2 : ℤ).toNat = 2 from rfl]
-    rcases (by omega : b % 2 = 0 ∨ b % 2 = 1) with hb2 | hb2
-    · exact dvd_sub (dvd_pow (show (2:ℤ) ∣ b by omega) (show a.toNat ≠ 0 by omega)) (dvd_pow (by rw [hf]; split_ifs <;> omega) two_ne_zero)
-    · rw [hodd b hb2, one_pow]
-      obtain ⟨k, hk⟩ : Odd (b ^ a.toNat) := Odd.pow (Int.odd_iff.mpr hb2)
-      rw [hk]; omega
-  · rw [hodd a ha2]; exact one_dvd _
+  have ho : ∀ k, k % 2 = 1 → f k = 1 := (fun k h => by simp [hf, h, show k ≠ 4 by omega]); have he : ∀ k, k % 2 = 0 → k ≠ 4 → f k = 2 := (fun k h h' => by simp [hf, h', show k % 2 ≠ 1 by omega])
+  refine ⟨4, f, by norm_num, fun k _ => (by rw [hf]; split_ifs <;> norm_num), fun a b ha _ => ?_, by norm_num [hf]⟩
+  rcases (by omega : a % 2 = 1 ∨ a = 4 ∨ a % 2 = 0 ∧ a ≠ 4) with ha2 | rfl | ⟨ha2, ha4⟩
+  · rw [ho a ha2]; exact one_dvd _
+  · rw [show f 4 = 16 by simp [hf], show (4:ℤ).toNat = 4 from rfl, show (16:ℤ).toNat = 16 from rfl]; rcases (by omega : b % 2 = 0 ∨ b % 2 = 1) with hb2 | hb2
+    · exact dvd_sub (dvd_trans (by norm_num) (pow_dvd_pow_of_dvd (by omega : (2:ℤ) ∣ b) 4)) (dvd_trans (by norm_num) (pow_dvd_pow_of_dvd (by rw [hf]; split_ifs <;> omega : (2:ℤ) ∣ f b) 16))
+    · rw [ho b hb2, one_pow]; have hm : b ^ 4 % 16 = 1 := (by rcases (by omega : b % 16 = 1 ∨ b % 16 = 3 ∨ b % 16 = 5 ∨ b % 16 = 7 ∨ b % 16 = 9 ∨ b % 16 = 11 ∨ b % 16 = 13 ∨ b % 16 = 15) with h | h | h | h | h | h | h | h <;> simp [pow_succ, Int.mul_emod, h]); omega
+  · rw [he a ha2 ha4, show (2:ℤ).toNat = 2 from rfl]; rcases (by omega : b % 2 = 0 ∨ b % 2 = 1) with hb2 | hb2
+    · exact dvd_sub (dvd_pow (by omega) (by omega)) (dvd_pow (by rw [hf]; split_ifs <;> omega) two_ne_zero)
+    · rw [ho b hb2, one_pow]; obtain ⟨k, hk⟩ : Odd (b ^ a.toNat) := Odd.pow (Int.odd_iff.mpr hb2); rw [hk]; omega
 end IMO2025.P3
