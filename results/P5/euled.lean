@@ -12,23 +12,24 @@ theorem imo2025_p5_algebra_A (l : ℝ) (hl0 : l > 0) (WinA : ℕ → ℝ → ℝ
           WinA (n + 1) (sum1 + a + b) (sum2 + a ^ 2 + b ^ 2))
     (hl : l > √2 / 2) : WinA 0 0 0 := by
   by_contra h
-  have R : ∀ k : ℕ, ∃ s1 s2 : ℝ, 0 ≤ s1 ∧ 0 ≤ s2 ∧ s1 ^ 2 ≤ (k : ℝ) * s2 ∧ s2 ≤ 2 * (k : ℝ) ∧ ¬ WinA k s1 s2 := by
-    intro k; induction k with
-    | zero => exact ⟨0, 0, by simp, by simp, by simp, by simp, h⟩
+  have h2 : (1:ℝ) / 2 < l ^ 2 := by
+    nlinarith [Real.sq_sqrt zero_le_two, Real.sqrt_nonneg 2]
+  have R : ∀ k : ℕ, ∃ s q : ℝ, s ≤ (2 * k + 1) * l ∧ 4 * l * s ≤ q + 4 * l ^ 2 * k ∧
+      q ≤ 2 * k ∧ ¬WinA k s q := by
+    intro k
+    induction k with
+    | zero => exact ⟨0, 0, by simp [hl0.le, h]⟩
     | succ k ih =>
-      obtain ⟨s1, s2, hs1, hs2, hsq, hs2k, hW⟩ := ih
-      have hk : (0:ℝ) ≤ k := Nat.cast_nonneg k; have hl2 : (1:ℝ) / 2 < l ^ 2 := (by nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 2 by norm_num), Real.sqrt_nonneg 2]); rw [winA_iff] at hW; push_neg at hW
-      obtain ⟨b, hb, hle, hnw⟩ := hW 0 le_rfl (by nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ 2 * k + 1) hl0.le, mul_le_mul_of_nonneg_left hl2.le (sq_nonneg (2 * (k:ℝ) + 1)), mul_le_mul_of_nonneg_left hs2k hk])
-      refine ⟨s1 + b, s2 + b ^ 2, by linarith, add_nonneg hs2 (sq_nonneg b), ?_, ?_, by simpa using hnw⟩
-      · push_cast; rcases hk.eq_or_lt with e | e
-        · rw [← e] at hsq ⊢; obtain rfl : s1 = 0 := (by nlinarith); nlinarith
-        · nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ k + 1) (sub_nonneg.2 hsq), sq_nonneg ((k:ℝ) * b - s1)]
-      · push_cast; linarith [show (0:ℝ) ^ 2 = 0 by norm_num]
-  obtain ⟨N, hN⟩ : ∃ N : ℕ, ∀ (s1 s2 : ℝ), 0 ≤ s1 → s1 ≤ √2 * (N : ℝ) → 0 ≤ s2 → s2 ≤ 2 * (N : ℝ) → s2 + ((2 * (N : ℝ) + 1) * l - s1) ^ 2 > 2 * (N : ℝ) + 2 := by
-    obtain ⟨N, hN⟩ := exists_nat_gt (4 / (2 * l - √2) ^ 2 + 1); have hc : (0:ℝ) < 2 * l - √2 := (by linarith); have key : (4:ℝ) < N * (2 * l - √2) ^ 2 := (div_lt_iff₀ (pow_pos hc 2)).mp (by linarith); have hN1 : (1:ℝ) ≤ N := (by linarith [div_nonneg (by norm_num : (0:ℝ) ≤ 4) (sq_nonneg (2 * l - √2))])
-    refine ⟨N, fun s1 s2 _ h2 h3 _ => ?_⟩; have hT : (2 * l - √2) * N ≤ (2 * (N:ℝ) + 1) * l - s1 := (by nlinarith [Real.sqrt_nonneg 2]); have hNa : 0 ≤ (2 * l - √2) * N := mul_nonneg hc.le (Nat.cast_nonneg N); nlinarith [mul_le_mul hT hT hNa (le_trans hNa hT), mul_lt_mul_of_pos_left key (by linarith : (0:ℝ) < N)]
-  obtain ⟨s1, s2, h1, h2, h3, h4, h5⟩ := R N; have hN0 : (0 : ℝ) ≤ N := Nat.cast_nonneg N; have hsq : (√2 * N) ^ 2 = 2 * (N : ℝ) ^ 2 := (by rw [mul_pow, Real.sq_sqrt (by norm_num)]); have h6 : s1 ≤ √2 * N := (by nlinarith [mul_nonneg (Real.sqrt_nonneg 2) hN0, hsq, (by nlinarith [mul_le_mul_of_nonneg_left h4 hN0] : s1 ^ 2 ≤ 2 * (N : ℝ) ^ 2)]); have h7 := hN s1 s2 h1 h6 h2 h4; rw [winA_iff] at h5; push_neg at h5
-  obtain ⟨b, _, hb2, _⟩ := h5 ((2 * N + 1) * l - s1) (by nlinarith [mul_nonneg hN0 (show (0 : ℝ) ≤ 2 * l - √2 by linarith)]) (by linarith); nlinarith [sq_nonneg b]
+      obtain ⟨s, q, E, I, hq, hW⟩ := ih
+      rw [winA_iff] at hW; push_neg at hW
+      obtain ⟨b, -, hle, hn⟩ := hW 0 le_rfl (by linarith)
+      refine ⟨s + 0 + b, q + 0 ^ 2 + b ^ 2, ?_, ?_, ?_, hn⟩ <;> push_cast <;>
+        nlinarith [sq_nonneg (b - 2 * l), mul_le_mul_of_nonneg_left h2.le k.cast_nonneg, hl0]
+  obtain ⟨n, hn⟩ := exists_nat_gt (1 / (2 * l ^ 2 - 1))
+  obtain ⟨s, q, E, I, hq, hW⟩ := R n
+  rw [winA_iff] at hW; push_neg at hW
+  obtain ⟨b, -, hb, -⟩ := hW ((2 * n + 1) * l - s) (by linarith) (by linarith)
+  nlinarith [(div_lt_iff₀ (by linarith)).1 hn, sq_nonneg ((2 * n + 1) * l - s - 2 * l), sq_nonneg b]
 
 theorem imo2025_p5_algebra_B (l : ℝ) (hl0 : l > 0) (WinB : ℕ → ℝ → ℝ → Prop)
     (winB_iff : ∀ (n : ℕ) (sum1 sum2 : ℝ), WinB n sum1 sum2 ↔
@@ -37,10 +38,18 @@ theorem imo2025_p5_algebra_B (l : ℝ) (hl0 : l > 0) (WinB : ℕ → ℝ → ℝ
           WinB (n + 1) (sum1 + a + b) (sum2 + a ^ 2 + b ^ 2))
     (hl : l < √2 / 2) : WinB 0 0 0 := by
   obtain ⟨N, hN⟩ := exists_nat_gt (l / (√2 - 2 * l))
-  have key : ∀ m n : ℕ, n + m = N → ∀ s₁ s₂ : ℝ, s₁ ≥ (n : ℝ) * √2 → s₂ = 2 * (n : ℝ) → WinB n s₁ s₂ := by
-    intro m; induction m with
-    | zero => intro n hn s₁ s₂ h₁ _; have hlN := (div_lt_iff₀ (by linarith : (0:ℝ) < √2 - 2 * l)).1 hN; obtain rfl : n = N := (by omega); rw [winB_iff]; intro a ha hsum; exfalso; nlinarith
-    | succ m ih => intro n hn s₁ s₂ h₁ h₂; rw [winB_iff]; intro a ha hsum; have hs := Real.sq_sqrt (show (0:ℝ) ≤ 2 by norm_num); have hs0 := Real.sqrt_nonneg 2; have hkl := mul_le_mul_of_nonneg_left hl.le (show (0:ℝ) ≤ 2 * n + 1 by positivity); have ha2 : a ^ 2 ≤ 2 := (by nlinarith [mul_nonneg ha hs0]); have hb := Real.sq_sqrt (show (0:ℝ) ≤ 2 - a ^ 2 by linarith); have hb0 := Real.sqrt_nonneg (2 - a ^ 2); have hab : √2 ≤ a + √(2 - a ^ 2) := (by nlinarith [mul_nonneg ha hb0]); exact ⟨√(2 - a ^ 2), hb0, by linarith, ih (n + 1) (by omega) _ _ (by push_cast; linarith) (by push_cast; linarith)⟩
+  have hs := Real.sq_sqrt zero_le_two
+  have hd : 0 < √2 - 2 * l := by linarith
+  rw [div_lt_iff₀ hd] at hN
+  have key : ∀ m n : ℕ, n + m = N → ∀ s t : ℝ, n * √2 ≤ s → t ≤ 2 * n → WinB n s t := by
+    intro m
+    induction m with
+    | zero => intro n hn s t h _; simp at hn; subst hn; rw [winB_iff]; intro a ha hsum; exfalso; nlinarith
+    | succ m ih =>
+      intro n hn s t h h₂; rw [winB_iff]; intro a ha hsum
+      have hl' : a ≤ √2 := by nlinarith [mul_nonneg (Nat.cast_nonneg n) hd.le]
+      have := mul_nonneg ha (sub_nonneg.2 hl')
+      exact ⟨√2 - a, by linarith, by nlinarith, ih (n + 1) (by omega) _ _ (by push_cast; linarith) (by push_cast; nlinarith)⟩
   exact key N 0 (by omega) 0 0 (by simp) (by simp)
 
 theorem imo2025_p5_draw_b (l : ℝ) (hl0 : l > 0) (hl : l = √2 / 2) :
@@ -52,15 +61,14 @@ theorem imo2025_p5_draw_b (l : ℝ) (hl0 : l > 0) (hl : l = √2 / 2) :
           (∑ i ∈ Finset.range k, (a i + b i)) + a k ≤ (2 * k + 1) * l ∧
           (∑ i ∈ Finset.range k, (a i ^ 2 + b i ^ 2)) + a k ^ 2 + b k ^ 2 ≤ 2 * k + 2) →
         (∑ i ∈ Finset.range n, (a i + b i)) + a n ≤ (2 * n + 1) * l := by
-  have hl2 : l ^ 2 = 1 / 2 := by rw [hl, div_pow, Real.sq_sqrt (by norm_num)]; norm_num
-  refine ⟨fun _ _ => 0, fun _ _ => le_refl _, fun b _ a ha n hyp => ?_⟩
+  have h : l ^ 2 = 1 / 2 := by norm_num [hl, div_pow]
+  refine ⟨0, fun _ _ => le_rfl, fun b _ a ha n hyp => ?_⟩
   rcases n with _ | m
   · simp [ha, hl0.le]
-  have hQ : ∑ i ∈ Finset.range (m + 1), b i ^ 2 ≤ 2 * (m : ℝ) + 2 := by
-    have := (hyp m (by omega)).2; simp [ha, Finset.sum_range_succ] at this ⊢; linarith
-  have hs := Finset.sum_le_sum fun i (_ : i ∈ Finset.range (m + 1)) => (show 4 * l * b i ≤ b i ^ 2 + 2 by nlinarith [sq_nonneg (b i - 2 * l)])
-  rw [← Finset.mul_sum, Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul] at hs
-  simp only [ha, zero_add, add_zero]; push_cast at hs ⊢
+  have := (hyp m m.lt_succ_self).2
+  have := Finset.sum_le_sum fun i (_ : i ∈ Finset.range (m + 1)) =>
+    (show 4 * l * b i ≤ b i ^ 2 + 2 by nlinarith [sq_nonneg (b i - 2 * l)])
+  simp [ha, Finset.sum_range_succ, ← Finset.mul_sum, Finset.sum_add_distrib] at *
   nlinarith
 
 theorem imo2025_p5_draw_a (l : ℝ) (hl0 : l > 0) (hl : l = √2 / 2) :
@@ -73,17 +81,14 @@ theorem imo2025_p5_draw_a (l : ℝ) (hl0 : l > 0) (hl : l = √2 / 2) :
           (∑ i ∈ Finset.range k, (a i ^ 2 + b i ^ 2)) + a k ^ 2 + b k ^ 2 ≤ 2 * k + 2) →
         (∑ i ∈ Finset.range n, (a i + b i)) + a n ≤ (2 * n + 1) * l →
         (∑ i ∈ Finset.range n, (a i ^ 2 + b i ^ 2)) + a n ^ 2 + b n ^ 2 ≤ 2 * n + 2 := by
-  refine ⟨fun n f => max (√2 - f (Fin.last n)) 0, fun _ _ => le_max_right _ _, ?_⟩
-  intro a ha b h1 n h2 h3
+  refine ⟨fun n f => |√2 - f (Fin.last n)|, fun _ _ => abs_nonneg _, fun a ha b hb n h2 h3 => ?_⟩
   subst hl
-  have hb : ∀ i, b i = max (√2 - a i) 0 := h1
-  have hS : (n : ℝ) * √2 ≤ ∑ i ∈ Finset.range n, (a i + b i) := by
-    simpa using Finset.sum_le_sum fun i (_ : i ∈ Finset.range n) => (show √2 ≤ a i + b i by linarith [le_max_left (√2 - a i) 0, hb i])
-  have hS2 : ∑ i ∈ Finset.range n, (a i ^ 2 + b i ^ 2) ≤ 2 * (n : ℝ) := by
-    rcases n with _ | m
-    · simp
-    · rw [Finset.sum_range_succ]; push_cast; linarith [(h2 m (by omega)).2]
-  have h12 : a n ≤ √2 := by nlinarith [Real.sqrt_nonneg 2]
-  rw [hb n, max_eq_left (sub_nonneg.mpr h12)]
-  nlinarith [mul_nonneg (ha n) (sub_nonneg.mpr h12), Real.mul_self_sqrt (show (0:ℝ) ≤ 2 by norm_num)]
+  simp at hb
+  have hS := Finset.sum_le_sum fun i (_ : i ∈ Finset.range n) => (show √2 ≤ a i + b i by linarith [le_abs_self (√2 - a i), hb i])
+  simp at hS
+  have hS2 : ∑ i ∈ Finset.range n, (a i ^ 2 + b i ^ 2) ≤ 2 * n := by
+    rcases n with _ | m <;> simp [Finset.sum_range_succ] <;> linarith [(h2 m (by omega)).2]
+  have h12 : 0 ≤ √2 - a n := by linarith
+  rw [hb n, sq_abs]
+  nlinarith [mul_nonneg (ha n) h12, Real.sq_sqrt zero_le_two]
 end IMO2025.P5
