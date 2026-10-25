@@ -1,0 +1,38 @@
+[
+ {
+  "problem": "P1",
+  "paper_original": 36478,
+  "paper_proofoptimizer": 20506,
+  "original": null,
+  "euled": null,
+  "original_strict": null,
+  "euled_strict": null
+ },
+ {
+  "problem": "P3",
+  "paper_original": 16377,
+  "paper_proofoptimizer": 7907,
+  "original": null,
+  "euled": null,
+  "original_strict": null,
+  "euled_strict": null
+ },
+ {
+  "problem": "P4",
+  "paper_original": 29147,
+  "paper_proofoptimizer": 14531,
+  "original": null,
+  "euled": null,
+  "original_strict": null,
+  "euled_strict": null
+ },
+ {
+  "problem": "P5",
+  "paper_original": 8658,
+  "paper_proofoptimizer": 4002,
+  "original": 8637,
+  "euled": 1820,
+  "original_strict": 10634,
+  "euled_strict": 3606
+ }
+]
