@@ -53,18 +53,15 @@ theorem imo2025_p5_draw_b (l : ℝ) (hl0 : l > 0) (hl : l = √2 / 2) :
           (∑ i ∈ Finset.range k, (a i ^ 2 + b i ^ 2)) + a k ^ 2 + b k ^ 2 ≤ 2 * k + 2) →
         (∑ i ∈ Finset.range n, (a i + b i)) + a n ≤ (2 * n + 1) * l := by
   have hl2 : l ^ 2 = 1 / 2 := by rw [hl, div_pow, Real.sq_sqrt (by norm_num)]; norm_num
-  refine ⟨fun _ _ => 0, fun _ _ => le_rfl, fun b _ a ha n hyp => ?_⟩
+  refine ⟨fun _ _ => 0, fun _ _ => le_refl _, fun b _ a ha n hyp => ?_⟩
   rcases n with _ | m
   · simp [ha, hl0.le]
-  have hQ := (hyp m (by omega)).2
-  have hs := Finset.sum_le_sum fun i (_ : i ∈ Finset.range (m + 1)) =>
-    show 4 * l * b i ≤ b i ^ 2 + 2 by nlinarith [sq_nonneg (b i - 2 * l)]
-  rw [Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul, ← Finset.mul_sum,
-    Finset.sum_range_succ (fun i => b i ^ 2)] at hs
-  simp [ha] at hQ ⊢
-  push_cast at hs
-  have h1 : l * ∑ i ∈ Finset.range (m + 1), b i ≤ m + 1 := by linarith
-  nlinarith [mul_le_mul_of_nonneg_left h1 hl0.le]
+  have hQ : ∑ i ∈ Finset.range (m + 1), b i ^ 2 ≤ 2 * (m : ℝ) + 2 := by
+    have := (hyp m (by omega)).2; simp [ha, Finset.sum_range_succ] at this ⊢; linarith
+  have hs := Finset.sum_le_sum fun i (_ : i ∈ Finset.range (m + 1)) => (show 4 * l * b i ≤ b i ^ 2 + 2 by nlinarith [sq_nonneg (b i - 2 * l)])
+  rw [← Finset.mul_sum, Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul] at hs
+  simp only [ha, zero_add, add_zero]; push_cast at hs ⊢
+  nlinarith
 
 theorem imo2025_p5_draw_a (l : ℝ) (hl0 : l > 0) (hl : l = √2 / 2) :
   ∃ sb : (n : ℕ) → (Fin (n + 1) → ℝ) → ℝ, (∀ i x, sb i x ≥ 0) ∧
@@ -76,17 +73,17 @@ theorem imo2025_p5_draw_a (l : ℝ) (hl0 : l > 0) (hl : l = √2 / 2) :
           (∑ i ∈ Finset.range k, (a i ^ 2 + b i ^ 2)) + a k ^ 2 + b k ^ 2 ≤ 2 * k + 2) →
         (∑ i ∈ Finset.range n, (a i + b i)) + a n ≤ (2 * n + 1) * l →
         (∑ i ∈ Finset.range n, (a i ^ 2 + b i ^ 2)) + a n ^ 2 + b n ^ 2 ≤ 2 * n + 2 := by
-  refine ⟨fun n f => if f (Fin.last n) ≤ √2 then √2 - f (Fin.last n) else 0, (fun i x => by dsimp only; split_ifs <;> linarith), ?_⟩
+  refine ⟨fun n f => max (√2 - f (Fin.last n)) 0, fun _ _ => le_max_right _ _, ?_⟩
   intro a ha b h1 n h2 h3
-  have hb : ∀ i, b i = if a i ≤ √2 then √2 - a i else 0 := h1
+  subst hl
+  have hb : ∀ i, b i = max (√2 - a i) 0 := h1
   have hS : (n : ℝ) * √2 ≤ ∑ i ∈ Finset.range n, (a i + b i) := by
-    simpa using Finset.sum_le_sum fun i (_ : i ∈ Finset.range n) => (by rw [hb i]; split_ifs <;> linarith : √2 ≤ a i + b i)
+    simpa using Finset.sum_le_sum fun i (_ : i ∈ Finset.range n) => (show √2 ≤ a i + b i by linarith [le_max_left (√2 - a i) 0, hb i])
   have hS2 : ∑ i ∈ Finset.range n, (a i ^ 2 + b i ^ 2) ≤ 2 * (n : ℝ) := by
     rcases n with _ | m
     · simp
-    · have := (h2 m (by omega)).2
-      rw [Finset.sum_range_succ]; push_cast; linarith
+    · rw [Finset.sum_range_succ]; push_cast; linarith [(h2 m (by omega)).2]
   have h12 : a n ≤ √2 := by nlinarith [Real.sqrt_nonneg 2]
-  rw [hb n, if_pos h12]
+  rw [hb n, max_eq_left (sub_nonneg.mpr h12)]
   nlinarith [mul_nonneg (ha n) (sub_nonneg.mpr h12), Real.mul_self_sqrt (show (0:ℝ) ≤ 2 by norm_num)]
 end IMO2025.P5
