@@ -1,6 +1,6 @@
 # Euled beats ProofOptimizer
 
-Euled shortens machine-written Lean 4 proofs. On ByteDance Seed-Prover's IMO 2025 Problem 5 proof, it cuts the proof by more than ProofOptimizer does (Meta FAIR / MIT, ICLR 2026). Every Euled file compiles in Lean, and every competition theorem statement is byte-identical to the original.
+Euled shortens machine-written Lean 4 proofs. On all four of ByteDance Seed-Prover's IMO 2025 proofs, it cuts more than ProofOptimizer does (Meta FAIR / MIT, ICLR 2026). Across the four proofs combined, ProofOptimizer cut 48.2% and Euled cuts about 83%, measured with ProofOptimizer's own length code. Every Euled file compiles in Lean, and every competition theorem statement is byte-identical to the original.
 
 | Problem | ProofOptimizer cut | Euled cut (their count) | Euled cut (strict count) | Original → Euled (their count) |
 |---|---|---|---|---|
