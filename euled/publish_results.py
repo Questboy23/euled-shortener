@@ -29,6 +29,10 @@ def strict(t):
     return sum(P.proof_length(d) if locked(d) else len(P.lexer(P.remove_comments(d)).split()) for d in decls(t))
 
 
+def all_files(p):
+    return sorted(glob.glob(os.path.join(HERE, "runs", f"{p}_cycle*.lean"))) + glob.glob(os.path.join(HERE, "runs", f"{p}_verified_*.lean"))
+
+
 def best_file(p):
     cands = sorted(glob.glob(os.path.join(HERE, "runs", f"{p}_cycle*.lean")))
     cands += glob.glob(os.path.join(HERE, "runs", f"{p}_verified_*.lean"))  # every Lean-verified snapshot
@@ -47,8 +51,10 @@ def main(push=True):
             rows.append((p, po0, po1, None, None, None, None)); continue
         os.makedirs(os.path.join(REPO, "results", p), exist_ok=True)
         shutil.copy(b, os.path.join(REPO, "results", p, "euled.lean"))
+        bs = min(all_files(p), key=lambda f: strict(open(f).read()))
+        shutil.copy(bs, os.path.join(REPO, "results", p, "euled_strict.lean"))
         o, e = open(orig).read(), open(b).read()
-        rows.append((p, po0, po1, loose(o), loose(e), strict(o), strict(e)))
+        rows.append((p, po0, po1, loose(o), loose(e), strict(o), strict(open(bs).read())))
     table = ["| Problem | ProofOptimizer cut | Euled cut (their count) | Euled cut (strict count) | Original → Euled (their count) |", "|---|---|---|---|---|"]
     for p, po0, po1, lo, le, so, se in rows:
         pct_po = 100 * (1 - po1 / po0)

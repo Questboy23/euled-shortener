@@ -4,7 +4,7 @@ Euled shortens machine-written Lean 4 proofs. On ByteDance Seed-Prover's IMO 202
 
 {{TABLE}}
 
-ProofOptimizer's numbers come from Table 3 of [arXiv 2510.15700](https://arxiv.org/abs/2510.15700). Bold marks a problem where Euled beats ProofOptimizer. Rows marked "running" are still being compressed. Last updated {{UPDATED}}.
+ProofOptimizer's numbers come from Table 3 of [arXiv 2510.15700](https://arxiv.org/abs/2510.15700). Bold marks a problem where Euled beats ProofOptimizer. Each column shows the best Lean-verified file for that count: `results/P*/euled.lean` for their count, `results/P*/euled_strict.lean` for the strict count. Rows marked "running" are still being compressed. Last updated {{UPDATED}}.
 
 **Try it on your own proof:** [reedsmoneymaker23.com/euled/shorten](https://reedsmoneymaker23.com/euled/shorten/)
 
