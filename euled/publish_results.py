@@ -65,7 +65,7 @@ def main(push=True):
     json.dump([dict(zip(["problem", "paper_original", "paper_proofoptimizer", "original", "euled", "original_strict", "euled_strict"], r)) for r in rows],
               open(os.path.join(REPO, "results", "results.json"), "w"), indent=1)
     if push:
-        subprocess.run("git add -A && git commit -qm 'Update results' && git push -q", shell=True, cwd=REPO)
+        subprocess.run("git add -A && git commit -qm 'Update results' -m 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>' -m 'Claude-Session: https://claude.ai/code/session_0148dtSFFgR9kBfxedvsYhco' && git push -q", shell=True, cwd=REPO)
     print("\n".join(table))
 
 

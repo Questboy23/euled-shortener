@@ -117,10 +117,10 @@ class Meta:
             head, st, _ = steps(ds[i]) if steps(ds[i])[0] else (None, None, None)
             if not st or len(st) < 2:
                 continue
-            cands = []
+            cands, news = [], []
             for k in range(len(st) - 1):
-                nd = list(ds); nd[i] = join(head, st[:k] + st[k + 1:]); cands.append(C.assemble(h, nd, t))
-            res = await asyncio.gather(*[self.ok(c) for c in cands])
+                nd = list(ds); nd[i] = join(head, st[:k] + st[k + 1:]); cands.append(C.assemble(h, nd, t)); news.append(nd[i])
+            res = await asyncio.gather(*[C.ok_local(self.ctx, h, ds, t, i, nd_i) for nd_i in news])
             good = [c for c, r in zip(cands, res) if r]
             # greedy: apply the best, then try combining the rest one at a time
             for c in sorted(good, key=po):
@@ -142,12 +142,12 @@ class Meta:
                 for tac in SHORT[:5]:
                     nd = list(ds); nd[i] = join(head, st[:k] + [pad + tac]); c = C.assemble(h, nd, t)
                     if po(c) < po(self.text):
-                        cands.append(c)
-            cands.sort(key=po)
+                        cands.append((c, nd[i]))
+            cands.sort(key=lambda x: po(x[0]))
             for chunk in range(0, min(len(cands), 48), 24):
                 part = cands[chunk:chunk + 24]
-                res = await asyncio.gather(*[self.ok(c) for c in part])
-                hit = [c for c, r in zip(part, res) if r]
+                res = await asyncio.gather(*[C.ok_local(self.ctx, h, ds, t, i, d_) for _, d_ in part])
+                hit = [c for (c, _), r in zip(part, res) if r]
                 if hit and await self.accept(min(hit, key=po), "shortcut"):
                     break
         return saved0 - po(self.text)
@@ -164,11 +164,11 @@ class Meta:
                 if P.proof_length("x := by" + blk) < 6:
                     continue
                 hind = len(ds[i][:m.start()].split("\n")[-1]) + 2
-                cands = []
+                cands, news = [], []
                 for tac in SHORT:
                     nd = list(ds); nd[i] = ds[i][:m.start()] + m.group(1) + " " + tac + ds[i][m.end():]
-                    cands.append(C.assemble(h, nd, t))
-                res = await asyncio.gather(*[self.ok(c) for c in cands])
+                    cands.append(C.assemble(h, nd, t)); news.append(nd[i])
+                res = await asyncio.gather(*[C.ok_local(self.ctx, h, ds, t, i, d_) for d_ in news])
                 hit = [c for c, r in zip(cands, res) if r]
                 if hit and await self.accept(min(hit, key=po), "closer"):
                     break  # declaration text changed; rescan next sweep
@@ -326,12 +326,12 @@ class Meta:
                             h, ds2, t = self.parts()
                             if i < len(ds2) and ds2[i]:
                                 nd = list(ds2); nd[i] = cand_d; cand = C.assemble(h, nd, t)
-                                if await self.ok(cand):
+                                if await C.ok_local(self.ctx, h, ds2, t, i, cand_d):
                                     best = cand_d
                                     if await self.accept(cand, "stretch"):
                                         return
                                 elif k < repairs:
-                                    err = await self.errors(cand)
+                                    err = await self.errors(C.local_src(h, ds2, t, i, cand_d))
                                     try:
                                         txt, _ = await asyncio.to_thread(E.ask_fcc, ask + f"\n\nYour attempt:\n```lean\n{cand_d}\n```\nLean errors:\n{err}\nFix it, still at most {lim} tokens.", 0.4, 4000)
                                     except Exception:

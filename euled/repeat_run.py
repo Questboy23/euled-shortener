@@ -69,6 +69,10 @@ def main():
                "cycle_gain_pct": round(100 * (last - s) / last, 2), "minutes": round((time.time() - t0) / 60, 1), "file": os.path.basename(keep)}
         open(os.path.join(RUN, f"{PROB}_cycles.jsonl"), "a").write(json.dumps(row) + "\n")
         log(f"CYCLE {row}")
+        try:  # keep the public repo current after every verified cycle
+            subprocess.run([sys.executable, os.path.join(HERE, "publish_results.py")], cwd=HERE, timeout=300)
+        except Exception as ex:
+            log(f"publish failed: {ex}")
         if (last - s) / last < 0.005:
             log("converged: cycle saved under 0.5%")
             break

@@ -5,26 +5,11 @@ set_option maxRecDepth 1000
 set_option tactic.hygienic false
 open BigOperators Real Nat Topology Rat
 namespace IMO2025.P5
-lemma round1_main (l : ℝ)
-  (hl : l > Real.sqrt 2 / 2):
-  ∃ (N : ℕ), ((2 * (N : ℝ) + 1) * l - Real.sqrt 2 * (N : ℝ)) ^ 2 > 2 * (N : ℝ) + 2 := by
-  have hc : 0 < 2 * l - Real.sqrt 2 := by linarith
-  obtain ⟨N, hN⟩ := exists_nat_gt (4 / (2 * l - Real.sqrt 2) ^ 2 + 1); have hq : (0:ℝ) ≤ 4 / (2 * l - Real.sqrt 2) ^ 2 := (by positivity)
-  have key : (4:ℝ) < N * (2 * l - Real.sqrt 2) ^ 2 := (div_lt_iff₀ (pow_pos hc 2)).mp (by linarith)
-  refine ⟨N, ?_⟩; nlinarith [mul_le_mul_of_nonneg_left key.le (Nat.cast_nonneg N), mul_pos (mul_pos (by linarith : (0:ℝ) < N) hc) (by linarith [Real.sqrt_nonneg 2] : (0:ℝ) < l), sq_nonneg l]
-
-lemma round1_final (l : ℝ)
-  (hl : l > Real.sqrt 2 / 2)
-  (N : ℕ)
-  (h20 : ((2 * (N : ℝ) + 1) * l - Real.sqrt 2 * (N : ℝ)) ^ 2 > 2 * (N : ℝ) + 2):
-  ∀ (s1 s2 : ℝ), 0 ≤ s1 → s1 ≤ Real.sqrt 2 * (N : ℝ) → 0 ≤ s2 → s2 ≤ 2 * (N : ℝ) → s2 + ((2 * (N : ℝ) + 1) * l - s1) ^ 2 > 2 * (N : ℝ) + 2 := by
-  intro s1 s2 _ h2 h3 _
-  nlinarith [mul_nonneg (sub_nonneg.mpr h2) (by nlinarith [mul_nonneg (by positivity : (0:ℝ) ≤ 2 * (N:ℝ) + 1) (sub_pos.mpr hl).le, Real.sqrt_nonneg 2] : (0:ℝ) ≤ 2 * ((2 * (N:ℝ) + 1) * l) - s1 - Real.sqrt 2 * (N:ℝ))]
-
 lemma round8_quadratic_growth_contradiction (l : ℝ) (hl : l > Real.sqrt 2 / 2) :
     ∃ (N : ℕ), ∀ (s1 s2 : ℝ), 0 ≤ s1 → s1 ≤ Real.sqrt 2 * (N : ℝ) → 0 ≤ s2 → s2 ≤ 2 * (N : ℝ) → s2 + ((2 * (N : ℝ) + 1) * l - s1) ^ 2 > 2 * (N : ℝ) + 2 := by
-  obtain ⟨N, hN⟩ := round1_main l hl
-  exact ⟨N, round1_final l hl N hN⟩
+  obtain ⟨N, hN⟩ := exists_nat_gt (4 / (2 * l - Real.sqrt 2) ^ 2 + 1); have hc : (0:ℝ) < 2 * l - Real.sqrt 2 := (by linarith); have key : (4:ℝ) < N * (2 * l - Real.sqrt 2) ^ 2 := (div_lt_iff₀ (pow_pos hc 2)).mp (by linarith)
+  have hN1 : (1:ℝ) ≤ N := (by linarith [div_nonneg (by norm_num : (0:ℝ) ≤ 4) (sq_nonneg (2 * l - Real.sqrt 2))]); refine ⟨N, fun s1 s2 _ h2 h3 _ => ?_⟩; have hT : (2 * l - Real.sqrt 2) * N ≤ (2 * (N:ℝ) + 1) * l - s1 := (by nlinarith [Real.sqrt_nonneg 2]); have hNa : 0 ≤ (2 * l - Real.sqrt 2) * N := mul_nonneg hc.le (Nat.cast_nonneg N)
+  nlinarith [mul_le_mul hT hT hNa (le_trans hNa hT), mul_lt_mul_of_pos_left key (by linarith : (0:ℝ) < N)]
 
 lemma round15_lemma1 (l : ℝ) (hl0 : l > 0) (WinA : ℕ → ℝ → ℝ → Prop)
   (winA_iff : ∀ (n : ℕ) (sum1 sum2 : ℝ), WinA n sum1 sum2 ↔
@@ -96,20 +81,13 @@ theorem imo2025_p5_algebra_A (l : ℝ) (hl0 : l > 0) (WinA : ℕ → ℝ → ℝ
         ∀ b : ℝ, b ≥ 0 → sum2 + a ^ 2 + b ^ 2 ≤ 2 * n + 2 →
           WinA (n + 1) (sum1 + a + b) (sum2 + a ^ 2 + b ^ 2))
     (hl : l > √2 / 2) : WinA 0 0 0 := by
-  by_contra h
-  obtain ⟨N, hN⟩ := round8_quadratic_growth_contradiction l hl
+  by_contra h; obtain ⟨N, hN⟩ := round8_quadratic_growth_contradiction l hl
   obtain ⟨s1, s2, h1, h2, h3, h4, h5⟩ := round15_h_main l hl0 WinA winA_iff hl h (round15_lemma1 l hl0 WinA winA_iff hl) N
   have hN0 : (0 : ℝ) ≤ N := Nat.cast_nonneg N
-  have hsq : (Real.sqrt 2 * N) ^ 2 = 2 * (N : ℝ) ^ 2 := by rw [mul_pow, Real.sq_sqrt (by norm_num)]
-  have h6 : s1 ≤ Real.sqrt 2 * N := by
-    have h61 : s1 ^ 2 ≤ 2 * (N : ℝ) ^ 2 := by nlinarith [mul_le_mul_of_nonneg_left h4 hN0]
-    nlinarith [mul_nonneg (Real.sqrt_nonneg 2) hN0, hsq, h61]
-  have h7 := hN s1 s2 h1 h6 h2 h4
-  have h9 : (2 * (N : ℝ) + 1) * l - s1 ≥ 0 := by nlinarith [mul_nonneg hN0 (show (0 : ℝ) ≤ 2 * l - Real.sqrt 2 by linarith)]
-  rw [winA_iff] at h5
-  push_neg at h5
-  obtain ⟨b, _, hb2, _⟩ := h5 _ h9 (by linarith)
-  nlinarith [sq_nonneg b]
+  have hsq : (Real.sqrt 2 * N) ^ 2 = 2 * (N : ℝ) ^ 2 := (by rw [mul_pow, Real.sq_sqrt (by norm_num)])
+  have h6 : s1 ≤ Real.sqrt 2 * N := (by nlinarith [mul_nonneg (Real.sqrt_nonneg 2) hN0, hsq, (by nlinarith [mul_le_mul_of_nonneg_left h4 hN0] : s1 ^ 2 ≤ 2 * (N : ℝ) ^ 2)])
+  have h7 := hN s1 s2 h1 h6 h2 h4; rw [winA_iff] at h5; push_neg at h5
+  obtain ⟨b, _, hb2, _⟩ := h5 ((2 * N + 1) * l - s1) (by nlinarith [mul_nonneg hN0 (show (0 : ℝ) ≤ 2 * l - Real.sqrt 2 by linarith)]) (by linarith); nlinarith [sq_nonneg b]
 
 lemma round3_P_holds_for_large_n (l : ℝ) (hl0 : l > 0) (hl : l < √2 / 2)
   (WinB : ℕ → ℝ → ℝ → Prop)
@@ -167,7 +145,6 @@ lemma imo2025_p5_draw1_main (l : ℝ) (hl0 : l > 0) (hl : l = √2 / 2) :
   · simp [ha]; linarith
   have hQ : ∑ i ∈ Finset.range m, b i ^ 2 + b m ^ 2 ≤ 2 * (m : ℝ) + 2 := by simpa [ha] using (hyp m (by omega)).2
   have h1 : l * ∑ i ∈ Finset.range (m + 1), b i ≤ m + 1 := by have key : ∀ i ∈ Finset.range (m + 1), 4 * l * b i ≤ b i ^ 2 + 2 := fun i _ => (by nlinarith [sq_nonneg (b i - 2 * l)]); have hs := Finset.sum_le_sum key; rw [← Finset.mul_sum, Finset.sum_add_distrib, Finset.sum_const, Finset.card_range, nsmul_eq_mul, Finset.sum_range_succ (fun i => b i ^ 2)] at hs; push_cast at hs; linarith
-  have h2 : ∑ i ∈ Finset.range (m + 1), b i = 2 * (l * (l * ∑ i ∈ Finset.range (m + 1), b i)) := by linear_combination (-2 * ∑ i ∈ Finset.range (m + 1), b i) * hl2
   simp only [ha, zero_add, add_zero, Nat.cast_add, Nat.cast_one]
   nlinarith
 

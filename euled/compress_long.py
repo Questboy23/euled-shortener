@@ -102,21 +102,41 @@ class Ctx:
                 except Exception:
                     pass
 
-    async def ok(self, src):
-        key = self._h(src)
+    async def ok(self, src, allow_sorry=False):
+        key = self._h(src) + ("L" if allow_sorry else "")
         if key in self.cache:
             return self.cache[key]
         async with self.sem:
             self.calls += 1
             try:
                 r = await self.c.check(content=src, environment=ENV, timeout_seconds=400)
-                good = bool(r.okay) and "sorry" not in src and "native_decide" not in src
+                good = bool(r.okay) and (allow_sorry or "sorry" not in src) and "native_decide" not in src
             except Exception:
                 good = False
         self.cache[key] = good
         with open(self.cache_path, "a") as fh:
             fh.write(json.dumps([key, good]) + "\n")
         return good
+
+
+def stub(d):
+    """Earlier declarations keep their statements; their proofs become `sorry` (a later lemma only uses statements)."""
+    if not d:
+        return d
+    stmt, _ = split_decl(d)
+    return stmt + " := by\n  sorry"
+
+
+def local_src(header, decls, tail, i, cand):
+    """File that checks ONLY declaration i: earlier ones stubbed, later ones dropped. 10-50x faster on big files.
+    The whole real file is still compiled before anything is kept."""
+    return assemble(header, [stub(d) for d in decls[:i] if d] + [cand], tail)
+
+
+async def ok_local(ctx, header, decls, tail, i, cand):
+    if re.search(r"\b(sorry|admit|native_decide)\b", cand):
+        return False
+    return await ctx.ok(local_src(header, decls, tail, i, cand), allow_sorry=True)
 
 
 def haiku(prompt):
@@ -151,8 +171,7 @@ async def improve_decl(ctx, header, decls, tail, i):
             c = stmt + " := by" + nb
         if size(c)["chars"] >= best_n:
             continue
-        trial = list(decls); trial[i] = c
-        if await ctx.ok(assemble(header, trial, tail)):
+        if await ok_local(ctx, header, decls, tail, i, c):
             best, best_n = c, size(c)["chars"]
             log(f"decl {i}: {size(decls[i])['chars']} -> {best_n} chars")
     return best
