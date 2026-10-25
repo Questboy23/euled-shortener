@@ -9,7 +9,7 @@ Euled shortens machine-written Lean 4 proofs. On ByteDance Seed-Prover's IMO 202
 | P4 | 50.1% | running | running | 29147 → running |
 | P5 | 53.8% | **80.0%** | 68.8% | 8637 → 1726 |
 
-ProofOptimizer's numbers come from Table 3 of [arXiv 2510.15700](https://arxiv.org/abs/2510.15700). Bold marks a problem where Euled beats ProofOptimizer. Rows marked "running" are still being compressed. Last updated 2026-10-25 08:26 ET.
+ProofOptimizer's numbers come from Table 3 of [arXiv 2510.15700](https://arxiv.org/abs/2510.15700). Bold marks a problem where Euled beats ProofOptimizer. Rows marked "running" are still being compressed. Last updated 2026-10-25 09:58 ET.
 
 **Try it on your own proof:** [reedsmoneymaker23.com/euled/shorten](https://reedsmoneymaker23.com/euled/shorten/)
 
