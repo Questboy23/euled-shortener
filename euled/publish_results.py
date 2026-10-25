@@ -31,9 +31,7 @@ def strict(t):
 
 def best_file(p):
     cands = sorted(glob.glob(os.path.join(HERE, "runs", f"{p}_cycle*.lean")))
-    extra = os.path.join(HERE, "runs", f"{p}_verified_best.lean")
-    if os.path.exists(extra):
-        cands.append(extra)
+    cands += glob.glob(os.path.join(HERE, "runs", f"{p}_verified_*.lean"))  # every Lean-verified snapshot
     return min(cands, key=lambda f: loose(open(f).read())) if cands else None
 
 

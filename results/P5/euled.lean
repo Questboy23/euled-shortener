@@ -5,53 +5,100 @@ set_option maxRecDepth 1000
 set_option tactic.hygienic false
 open BigOperators Real Nat Topology Rat
 namespace IMO2025.P5
+lemma round8_quadratic_growth_contradiction (l : ℝ) (hl : l > Real.sqrt 2 / 2) :
+    ∃ (N : ℕ), ∀ (s1 s2 : ℝ), 0 ≤ s1 → s1 ≤ Real.sqrt 2 * (N : ℝ) → 0 ≤ s2 → s2 ≤ 2 * (N : ℝ) → s2 + ((2 * (N : ℝ) + 1) * l - s1) ^ 2 > 2 * (N : ℝ) + 2 := by
+  obtain ⟨N, hN⟩ := exists_nat_gt (4 / (2 * l - Real.sqrt 2) ^ 2 + 1); have hc : (0:ℝ) < 2 * l - Real.sqrt 2 := (by linarith); have key : (4:ℝ) < N * (2 * l - Real.sqrt 2) ^ 2 := (div_lt_iff₀ (pow_pos hc 2)).mp (by linarith)
+  have hN1 : (1:ℝ) ≤ N := (by linarith [div_nonneg (by norm_num : (0:ℝ) ≤ 4) (sq_nonneg (2 * l - Real.sqrt 2))]); refine ⟨N, fun s1 s2 _ h2 h3 _ => ?_⟩; have hT : (2 * l - Real.sqrt 2) * N ≤ (2 * (N:ℝ) + 1) * l - s1 := (by nlinarith [Real.sqrt_nonneg 2]); have hNa : 0 ≤ (2 * l - Real.sqrt 2) * N := mul_nonneg hc.le (Nat.cast_nonneg N)
+  nlinarith [mul_le_mul hT hT hNa (le_trans hNa hT), mul_lt_mul_of_pos_left key (by linarith : (0:ℝ) < N)]
+
+lemma round15_lemma1 (l : ℝ) (hl0 : l > 0) (WinA : ℕ → ℝ → ℝ → Prop)
+  (winA_iff : ∀ (n : ℕ) (sum1 sum2 : ℝ), WinA n sum1 sum2 ↔
+    ∃ a : ℝ, a ≥ 0 ∧ sum1 + a ≤ (2 * n + 1) * l ∧
+      ∀ b : ℝ, b ≥ 0 → sum2 + a ^ 2 + b ^ 2 ≤ 2 * n + 2 →
+        WinA (n + 1) (sum1 + a + b) (sum2 + a ^ 2 + b ^ 2))
+  (hl : l > √2 / 2):
+  ∀ (k : ℕ) (s1 s2 : ℝ),
+    (¬ WinA k s1 s2) →
+    (0 ≤ s1) →
+    (0 ≤ s2) →
+    (s1 ^ 2 ≤ (k : ℝ) * s2) →
+    (s2 ≤ 2 * (k : ℝ)) →
+    ∃ (b_next : ℝ),
+      b_next ≥ 0 ∧
+      (¬ WinA (k + 1) (s1 + b_next) (s2 + b_next ^ 2)) ∧
+      (s2 + b_next ^ 2 ≤ 2 * ((k : ℝ) + 1)) ∧
+      ((s1 + b_next) ^ 2 ≤ ((k : ℝ) + 1) * (s2 + b_next ^ 2)) := by
+  intro k s1 s2 hW hs1 hs2 hsq hs2k
+  have hk : (0:ℝ) ≤ k := Nat.cast_nonneg k
+  have hl2 : (1:ℝ) / 2 < l ^ 2 := by nlinarith [hl, Real.sq_sqrt (show (0:ℝ) ≤ 2 by norm_num), Real.sqrt_nonneg 2]
+  have h0 : s1 + 0 ≤ (2 * (k:ℝ) + 1) * l := by
+    nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ 2 * k + 1) hl0.le,
+      mul_le_mul_of_nonneg_left hl2.le (sq_nonneg (2 * (k:ℝ) + 1)),
+      mul_le_mul_of_nonneg_left hs2k hk]
+  rw [winA_iff] at hW
+  push_neg at hW
+  obtain ⟨b, hb, hle, hnw⟩ := hW 0 le_rfl h0
+  refine ⟨b, hb, by simpa using hnw, by linarith [show (0:ℝ) ^ 2 = 0 by norm_num], ?_⟩
+  rcases hk.eq_or_lt with h | h
+  · rw [← h] at hsq ⊢
+    have hs : s1 = 0 := by nlinarith
+    subst hs
+    nlinarith
+  · nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ k + 1) (sub_nonneg.2 hsq), sq_nonneg ((k:ℝ) * b - s1)]
+
+lemma round15_h_main (l : ℝ) (hl0 : l > 0) (WinA : ℕ → ℝ → ℝ → Prop)
+  (winA_iff : ∀ (n : ℕ) (sum1 sum2 : ℝ), WinA n sum1 sum2 ↔
+    ∃ a : ℝ, a ≥ 0 ∧ sum1 + a ≤ (2 * n + 1) * l ∧
+      ∀ b : ℝ, b ≥ 0 → sum2 + a ^ 2 + b ^ 2 ≤ 2 * n + 2 →
+        WinA (n + 1) (sum1 + a + b) (sum2 + a ^ 2 + b ^ 2))
+  (hl : l > √2 / 2)
+  (h : ¬ WinA 0 0 0)
+  (lemma1 : ∀ (k : ℕ) (s1 s2 : ℝ),
+    (¬ WinA k s1 s2) →
+    (0 ≤ s1) →
+    (0 ≤ s2) →
+    (s1 ^ 2 ≤ (k : ℝ) * s2) →
+    (s2 ≤ 2 * (k : ℝ)) →
+    ∃ (b_next : ℝ),
+      b_next ≥ 0 ∧
+      (¬ WinA (k + 1) (s1 + b_next) (s2 + b_next ^ 2)) ∧
+      (s2 + b_next ^ 2 ≤ 2 * ((k : ℝ) + 1)) ∧
+      ((s1 + b_next) ^ 2 ≤ ((k : ℝ) + 1) * (s2 + b_next ^ 2))):
+  ∀ k : ℕ, ∃ s1 s2 : ℝ, (0 ≤ s1) ∧ (0 ≤ s2) ∧ (s1 ^ 2 ≤ (k : ℝ) * s2) ∧ (s2 ≤ 2 * (k : ℝ)) ∧ (¬ WinA k s1 s2) := by
+  intro k
+  induction k with
+  | zero => exact ⟨0, 0, by simp, by simp, by simp, by simp, h⟩
+  | succ k ih =>
+    obtain ⟨s1, s2, h1, h2, h3, h4, h5⟩ := ih
+    obtain ⟨b, hb, hw, hs, hq⟩ := lemma1 k s1 s2 h5 h1 h2 h3 h4
+    refine ⟨s1 + b, s2 + b ^ 2, by linarith, add_nonneg h2 (sq_nonneg b), ?_, ?_, hw⟩
+    · push_cast; exact hq
+    · push_cast; exact hs
+
 theorem imo2025_p5_algebra_A (l : ℝ) (hl0 : l > 0) (WinA : ℕ → ℝ → ℝ → Prop)
     (winA_iff : ∀ (n : ℕ) (sum1 sum2 : ℝ), WinA n sum1 sum2 ↔
       ∃ a : ℝ, a ≥ 0 ∧ sum1 + a ≤ (2 * n + 1) * l ∧
         ∀ b : ℝ, b ≥ 0 → sum2 + a ^ 2 + b ^ 2 ≤ 2 * n + 2 →
           WinA (n + 1) (sum1 + a + b) (sum2 + a ^ 2 + b ^ 2))
     (hl : l > √2 / 2) : WinA 0 0 0 := by
-  have L : ∀ (k : ℕ) (s1 s2 : ℝ), ¬ WinA k s1 s2 → 0 ≤ s1 → 0 ≤ s2 →
-      s1 ^ 2 ≤ (k : ℝ) * s2 → s2 ≤ 2 * (k : ℝ) →
-      ∃ b : ℝ, b ≥ 0 ∧ ¬ WinA (k + 1) (s1 + b) (s2 + b ^ 2) ∧
-        s2 + b ^ 2 ≤ 2 * ((k : ℝ) + 1) ∧ (s1 + b) ^ 2 ≤ ((k : ℝ) + 1) * (s2 + b ^ 2) := by
-    intro k s1 s2 hW hs1 hs2 hsq hs2k; have hk : (0:ℝ) ≤ k := Nat.cast_nonneg k
-    have hl2 : (1:ℝ) / 2 < l ^ 2 := by nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 2 by norm_num), Real.sqrt_nonneg 2]
-    rw [winA_iff] at hW; push_neg at hW
-    obtain ⟨b, hb, hle, hnw⟩ := hW 0 le_rfl (by nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ 2 * k + 1) hl0.le, mul_le_mul_of_nonneg_left hl2.le (sq_nonneg (2 * (k:ℝ) + 1)), mul_le_mul_of_nonneg_left hs2k hk])
-    refine ⟨b, hb, by simpa using hnw, by linarith [show (0:ℝ) ^ 2 = 0 by norm_num], ?_⟩
-    rcases hk.eq_or_lt with h | h
-    · rw [← h] at hsq ⊢; obtain rfl : s1 = 0 := (by nlinarith); nlinarith
-    · nlinarith [mul_nonneg (by linarith : (0:ℝ) ≤ k + 1) (sub_nonneg.2 hsq), sq_nonneg ((k:ℝ) * b - s1)]
-  by_contra h
-  have R : ∀ k : ℕ, ∃ s1 s2 : ℝ, (0 ≤ s1) ∧ (0 ≤ s2) ∧ (s1 ^ 2 ≤ (k : ℝ) * s2) ∧ (s2 ≤ 2 * (k : ℝ)) ∧ (¬ WinA k s1 s2) := by
-    intro k
-    induction k with
-    | zero => exact ⟨0, 0, by simp, by simp, by simp, by simp, h⟩
-    | succ k ih =>
-      obtain ⟨s1, s2, h1, h2, h3, h4, h5⟩ := ih
-      obtain ⟨b, hb, hw, hs, hq⟩ := L k s1 s2 h5 h1 h2 h3 h4
-      refine ⟨s1 + b, s2 + b ^ 2, by linarith, add_nonneg h2 (sq_nonneg b), ?_, ?_, hw⟩
-      · push_cast; exact hq
-      · push_cast; exact hs
-  obtain ⟨N, hN⟩ : ∃ N : ℕ, ∀ (s1 s2 : ℝ), 0 ≤ s1 → s1 ≤ √2 * (N : ℝ) → 0 ≤ s2 → s2 ≤ 2 * (N : ℝ) → s2 + ((2 * (N : ℝ) + 1) * l - s1) ^ 2 > 2 * (N : ℝ) + 2 := by
-    obtain ⟨N, hN⟩ := exists_nat_gt (4 / (2 * l - √2) ^ 2 + 1)
-    have hc : (0:ℝ) < 2 * l - √2 := by linarith
-    have key : (4:ℝ) < N * (2 * l - √2) ^ 2 := (div_lt_iff₀ (pow_pos hc 2)).mp (by linarith)
-    have hN1 : (1:ℝ) ≤ N := by linarith [div_nonneg (by norm_num : (0:ℝ) ≤ 4) (sq_nonneg (2 * l - √2))]
-    refine ⟨N, fun s1 s2 _ h2 h3 _ => ?_⟩
-    have hT : (2 * l - √2) * N ≤ (2 * (N:ℝ) + 1) * l - s1 := by nlinarith [Real.sqrt_nonneg 2]
-    have hNa : 0 ≤ (2 * l - √2) * N := mul_nonneg hc.le (Nat.cast_nonneg N)
-    nlinarith [mul_le_mul hT hT hNa (le_trans hNa hT), mul_lt_mul_of_pos_left key (by linarith : (0:ℝ) < N)]
-  obtain ⟨s1, s2, h1, h2, h3, h4, h5⟩ := R N
+  by_contra h; obtain ⟨N, hN⟩ := round8_quadratic_growth_contradiction l hl
+  obtain ⟨s1, s2, h1, h2, h3, h4, h5⟩ := round15_h_main l hl0 WinA winA_iff hl h (round15_lemma1 l hl0 WinA winA_iff hl) N
   have hN0 : (0 : ℝ) ≤ N := Nat.cast_nonneg N
-  have hsq : (√2 * N) ^ 2 = 2 * (N : ℝ) ^ 2 := by rw [mul_pow, Real.sq_sqrt (by norm_num)]
-  have h6 : s1 ≤ √2 * N := by nlinarith [mul_nonneg (Real.sqrt_nonneg 2) hN0, hsq, (by nlinarith [mul_le_mul_of_nonneg_left h4 hN0] : s1 ^ 2 ≤ 2 * (N : ℝ) ^ 2)]
-  have h7 := hN s1 s2 h1 h6 h2 h4
-  rw [winA_iff] at h5
-  push_neg at h5
-  obtain ⟨b, _, hb2, _⟩ := h5 ((2 * N + 1) * l - s1) (by nlinarith [mul_nonneg hN0 (show (0 : ℝ) ≤ 2 * l - √2 by linarith)]) (by linarith)
-  nlinarith [sq_nonneg b]
+  have hsq : (Real.sqrt 2 * N) ^ 2 = 2 * (N : ℝ) ^ 2 := (by rw [mul_pow, Real.sq_sqrt (by norm_num)])
+  have h6 : s1 ≤ Real.sqrt 2 * N := (by nlinarith [mul_nonneg (Real.sqrt_nonneg 2) hN0, hsq, (by nlinarith [mul_le_mul_of_nonneg_left h4 hN0] : s1 ^ 2 ≤ 2 * (N : ℝ) ^ 2)])
+  have h7 := hN s1 s2 h1 h6 h2 h4; rw [winA_iff] at h5; push_neg at h5
+  obtain ⟨b, _, hb2, _⟩ := h5 ((2 * N + 1) * l - s1) (by nlinarith [mul_nonneg hN0 (show (0 : ℝ) ≤ 2 * l - Real.sqrt 2 by linarith)]) (by linarith); nlinarith [sq_nonneg b]
+
+lemma round3_P_holds_for_large_n (l : ℝ) (hl0 : l > 0) (hl : l < √2 / 2)
+  (WinB : ℕ → ℝ → ℝ → Prop)
+  (winB_iff : ∀ (n : ℕ) (sum1 sum2 : ℝ), WinB n sum1 sum2 ↔
+    ∀ a : ℝ, a ≥ 0 → sum1 + a ≤ (2 * n + 1) * l →
+      ∃ b : ℝ, b ≥ 0 ∧ sum2 + a ^ 2 + b ^ 2 ≤ 2 * n + 2 ∧
+        WinB (n + 1) (sum1 + a + b) (sum2 + a ^ 2 + b ^ 2)):
+  ∃ N : ℕ, ∀ n : ℕ, n ≥ N → ∀ (s₁ : ℝ) (s₂ : ℝ), s₁ ≥ (n : ℝ) * Real.sqrt 2 → s₂ = 2 * (n : ℝ) → WinB n s₁ s₂ := by
+  obtain ⟨N, hN⟩ := exists_nat_gt (l / (√2 - 2 * l))
+  refine ⟨N, fun n hn s₁ s₂ h₁ _ => (winB_iff n s₁ s₂).2 fun a ha hsum => ?_⟩
+  exfalso; nlinarith [(div_lt_iff₀ (by linarith : (0:ℝ) < √2 - 2 * l)).1 (lt_of_lt_of_le hN (by exact_mod_cast hn : (N:ℝ) ≤ n))]
 
 lemma round3_P_inductive_step_backward (l : ℝ) (hl0 : l > 0) (hl : l < √2 / 2)
   (WinB : ℕ → ℝ → ℝ → Prop)
@@ -76,13 +123,10 @@ theorem imo2025_p5_algebra_B (l : ℝ) (hl0 : l > 0) (WinB : ℕ → ℝ → ℝ
         ∃ b : ℝ, b ≥ 0 ∧ sum2 + a ^ 2 + b ^ 2 ≤ 2 * n + 2 ∧
           WinB (n + 1) (sum1 + a + b) (sum2 + a ^ 2 + b ^ 2))
     (hl : l < √2 / 2) : WinB 0 0 0 := by
-  obtain ⟨N, hN⟩ := exists_nat_gt (l / (√2 - 2 * l))
-  have hP : ∀ s₁ s₂ : ℝ, s₁ ≥ (N : ℝ) * √2 → WinB N s₁ s₂ := fun s₁ s₂ h₁ =>
-    (winB_iff N s₁ s₂).2 fun a ha hsum => by
-      exfalso; nlinarith [(div_lt_iff₀ (by linarith : (0:ℝ) < √2 - 2 * l)).1 hN]
-  have key : ∀ d : ℕ, d ≤ N → ∀ s₁ s₂ : ℝ, s₁ ≥ ((N - d : ℕ) : ℝ) * √2 → s₂ = 2 * ((N - d : ℕ) : ℝ) → WinB (N - d) s₁ s₂ := by
+  obtain ⟨N, hN⟩ := round3_P_holds_for_large_n l hl0 hl WinB winB_iff
+  have key : ∀ d : ℕ, d ≤ N → ∀ s₁ s₂ : ℝ, s₁ ≥ ((N - d : ℕ) : ℝ) * Real.sqrt 2 → s₂ = 2 * ((N - d : ℕ) : ℝ) → WinB (N - d) s₁ s₂ := by
     intro d; induction d with
-    | zero => exact fun _ s₁ s₂ h₁ _ => hP s₁ s₂ h₁
+    | zero => exact fun _ s₁ s₂ h₁ h₂ => hN N le_rfl s₁ s₂ h₁ h₂
     | succ d ih => intro hd s₁ s₂ h₁ h₂; rw [show N - d = N - (d + 1) + 1 by omega] at ih; exact round3_P_inductive_step_backward l hl0 hl WinB winB_iff (N - (d + 1)) (ih (by omega)) s₁ s₂ h₁ h₂
   simpa using key N le_rfl 0 0 (by simp) (by simp)
 
