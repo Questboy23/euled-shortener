@@ -21,10 +21,10 @@
   "problem": "P4",
   "paper_original": 29147,
   "paper_proofoptimizer": 14531,
-  "original": null,
-  "euled": null,
-  "original_strict": null,
-  "euled_strict": null
+  "original": 29082,
+  "euled": 4931,
+  "original_strict": 40887,
+  "euled_strict": 12454
  },
  {
   "problem": "P5",
