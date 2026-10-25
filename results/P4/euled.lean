@@ -7,35 +7,14 @@ set_option maxRecDepth 1000
 set_option tactic.hygienic false
 open BigOperators Real Nat Topology Rat Classical Polynomial
 namespace IMO2025.P4
-lemma a0_is_even1_h_lemma1 (a : ℕ → ℕ)
-  (hpos : ∀ n : ℕ, a n > 0)
-  (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d):
-  ∀ n : ℕ, (a n % 2 = 1) → a (n + 1) < a n := by
-  intro n hn
-  obtain ⟨b, c, d, hbc, hcd, hdN, -, -, ⟨k, hk⟩, -, hsum⟩ := h1 n
-  rcases Nat.lt_or_ge k 3 with hk3 | hk3
-  · interval_cases k <;> omega
-  nlinarith
-
-lemma a0_is_even1_h_lemma2 (a : ℕ → ℕ)
-  (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d):
-  (a 0 % 2 = 1) → ∀ n : ℕ, a n % 2 = 1 := by
-  intro h0 n
-  induction n with
-  | zero => exact h0
-  | succ k ih =>
-    obtain ⟨b, c, d, -, -, -, hb, hc, hd, -, hs⟩ := h1 k; have ho := Nat.odd_iff.mpr ih; rw [hs, ← Nat.odd_iff]; exact ((ho.of_dvd_nat hb).add_odd (ho.of_dvd_nat hc)).add_odd (ho.of_dvd_nat hd)
-
 lemma a0_is_even1_h_main (a : ℕ → ℕ)
   (hpos : ∀ n : ℕ, a n > 0)
   (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d)
   (h_lemma1 : ∀ n : ℕ, (a n % 2 = 1) → a (n + 1) < a n)
   (h_lemma2 : (a 0 % 2 = 1) → ∀ n : ℕ, a n % 2 = 1):
   Even (a 0) := by
-  by_contra h
-  rw [Nat.even_iff] at h
-  have key : ∀ n, a n + n ≤ a 0 := by
-    intro n
+  rw [Nat.even_iff]; by_contra h
+  have key : ∀ n, a n + n ≤ a 0 := fun n => by
     induction n with
     | zero => omega
     | succ k ih => have := h_lemma1 k (h_lemma2 (by omega) k); omega
@@ -44,39 +23,39 @@ lemma a0_is_even1_h_main (a : ℕ → ℕ)
 
 theorem  a0_is_even (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) (h_an_pos : ∀ n, a n > 0) (h_an_prop : ∀ n, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d):
   Even (a 0) := by
-  exact a0_is_even1_h_main a hpos h1 (a0_is_even1_h_lemma1 a hpos h1) (a0_is_even1_h_lemma2 a h1)
+  have step : ∀ n, a n % 2 = 1 → a (n+1) % 2 = 1 ∧ a (n+1) < a n := by
+    intro n hn; obtain ⟨b, c, d, hbc, hcd, hdN, hb, hc, hd, -, hs⟩ := h1 n
+    have ho := Nat.odd_iff.mpr hn; rw [hs]
+    refine ⟨Nat.odd_iff.mp (((ho.of_dvd_nat hb).add_odd (ho.of_dvd_nat hc)).add_odd (ho.of_dvd_nat hd)), ?_⟩
+    obtain ⟨k, hk⟩ := hd
+    rcases Nat.lt_or_ge k 3 with hk3 | hk3 <;> first | (interval_cases k <;> omega) | nlinarith [Nat.zero_le d]
+  have hodd : ∀ n, a 0 % 2 = 1 → a n % 2 = 1 ∧ a n + n ≤ a 0 := fun n h0 => by
+    induction n with | zero => exact ⟨h0, by omega⟩ | succ k ih => have := step k ih.1; omega
+  rw [Nat.even_iff]; by_contra hne
+  have := (hodd (a 0) (by omega)).2; have := h_an_pos (a 0); omega
 
 lemma prop_a0_divisible_by_31_two_divides_a_n (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) :
   ∀ n : ℕ, 2 ∣ a n := by
   suffices H : ∀ m n, a n = m → 2 ∣ a n from fun n => H _ n rfl
   intro m; refine Nat.strong_induction_on m fun m ih n hn => ?_
-  obtain ⟨b, c, d, hbc, hcd, hdm, hb, hc, hd, -, hnext⟩ := h1 n
-  by_contra hodd; obtain ⟨k, hk⟩ := id hd; have hp := hpos n
-  obtain ⟨p, q, r⟩ : ¬ 2 ∣ b ∧ ¬ 2 ∣ c ∧ ¬ 2 ∣ d := ⟨fun h => hodd (h.trans hb), fun h => hodd (h.trans hc), fun h => hodd (h.trans hd)⟩
-  have hk3 : 3 ≤ k := by by_contra h; push_neg at h; interval_cases k <;> omega
-  have h2 := ih (b + c + d) (by nlinarith) (n + 1) hnext
-  grind
+  obtain ⟨b, c, d, hbc, hcd, hdm, hb, hc, hd, -, hnext⟩ := h1 n; by_contra hodd; have key : ∀ x, x ∣ a n → ¬ 2 ∣ x := fun x hx h => hodd (h.trans hx)
+  obtain ⟨k, hk⟩ := id hd; have hp := hpos n; have hk3 : 3 ≤ k := (by by_contra h; push_neg at h; interval_cases k <;> omega)
+  have h2 := ih (b + c + d) (by nlinarith) (n + 1) hnext; have := key b hb; have := key c hc; have := key d hd; omega
 
 lemma exists_first_term_divisible_by_3_h3 (a : ℕ → ℕ)
   (hpos : ∀ n : ℕ, a n > 0)
   (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d):
   ∃ j, 3 ∣ a j := by
   by_contra! hcon
-  have key : ∀ n, a (n + 1) < a n := fun n => by
-    obtain ⟨b, c, d, hbc, hcd, hda, ⟨r, hr⟩, ⟨q, hq⟩, ⟨p, hp⟩, -, hsum⟩ := h1 n; have h3 := hcon n
-    have hd2 : 2 * d ≤ a n := by rw [hp]; rcases p with _ | _ | p <;> nlinarith [Nat.zero_le d]
-    have hq4 : 4 ≤ q := by by_contra! h; interval_cases q <;> omega
-    have hc4 : 4 * c ≤ a n := by rw [hq]; nlinarith [Nat.zero_le c, hq4]
-    omega
-  have bound : ∀ n, a n + n ≤ a 0 := fun n => by induction n with | zero => simp | succ k ih => have := key k; omega
-  have := bound (a 0); have := hpos (a 0); omega
+  have key : ∀ n, a (n + 1) < a n := fun n => (by obtain ⟨b, c, d, hbc, hcd, hda, -, ⟨q, hq⟩, ⟨p, hp⟩, -, hsum⟩ := h1 n; have h3 := hcon n; have hd2 : 2 * d ≤ a n := (by rcases p with _ | _ | p <;> nlinarith); have hc4 : 4 * c ≤ a n := (by by_contra! h; have hq4 : q < 4 := (by nlinarith [Nat.zero_le c]); interval_cases q <;> omega); omega)
+  have bound : ∀ n, a n + n ≤ a 0 := fun n => (by induction n with | zero => simp | succ k ih => have := key k; omega); have := bound (a 0); have := hpos (a 0); omega
 
 lemma exists_first_term_divisible_by_3_h4 (a : ℕ → ℕ)
   (hpos : ∀ n : ℕ, a n > 0)
   (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d)
   (h3 : ∃ j, 3 ∣ a j):
   ∃ j, 3 ∣ a j ∧ ∀ i < j, ¬ (3 ∣ a i) := by
-  exact ⟨Nat.find h3, Nat.find_spec h3, fun i hi => Nat.find_min h3 hi⟩
+  exact ⟨Nat.find h3, Nat.find_spec h3, fun _ => Nat.find_min h3⟩
 
 theorem exists_first_term_divisible_by_3 (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d): ∃ j, 3 ∣ a j ∧ ∀ i < j, ¬ (3 ∣ a i) := by
   exact exists_first_term_divisible_by_3_h4 a hpos h1 (exists_first_term_divisible_by_3_h3 a hpos h1)
@@ -87,11 +66,7 @@ lemma prop_a0_divisible_by_31_h_main (a : ℕ → ℕ)
   (h_lemma1 : ∀ n : ℕ, (a n % 2 = 1) → a (n + 1) < a n)
   (h_lemma2 : (a 0 % 2 = 1) → ∀ n : ℕ, a n % 2 = 1):
   Even (a 0) := by
-  by_contra h
-  rw [Nat.even_iff] at h
-  have h₁ : ∀ n, a n + n ≤ a 0 := fun n => by
-    induction n with | zero => simp | succ n ih => have := h_lemma1 n (h_lemma2 (by omega) n); omega
-  have := h₁ (a 0 + 1); omega
+  exact a0_is_even1_h_main a hpos h1 h_lemma1 h_lemma2
 
 lemma prop_a0_divisible_by_31_main_contradiction
   (a : ℕ → ℕ)
@@ -118,14 +93,20 @@ lemma prop_a0_divisible_by_31_main_contradiction
   False := by
   have h2s : 2 ∣ b + c + d := by rw [← h16]; exact prop_a0_divisible_by_31_two_divides_a_n a hpos h1 (k + 1)
   obtain ⟨t, ht⟩ := h14
+  obtain ⟨m, hm⟩ := prop_a0_divisible_by_31_two_divides_a_n a hpos h1 k
+  have := hpos k
   have ht2 : 2 ≤ t := by by_contra! h; interval_cases t <;> omega
   have hd2 : 2 * d ≤ a k := by rw [ht]; nlinarith [Nat.zero_le d]
-  obtain ⟨m, hm⟩ := prop_a0_divisible_by_31_two_divides_a_n a hpos h1 k
-  have hN : a k = 2 * d := by rcases h15 m (by omega) ⟨2, by omega⟩ with h | h | h <;> omega
-  have key : ∀ x, x ∣ a k → x < d → x % 2 = 1 → 2 * x ≤ b ∨ 2 * x = c ∨ 2 * x = d := fun x hx hxd ho =>
-    h15 (2 * x) (by omega) (by rw [hN]; exact mul_dvd_mul_left 2 (Nat.Coprime.dvd_of_dvd_mul_left (Nat.Coprime.symm ((Nat.Prime.coprime_iff_not_dvd Nat.prime_two).mpr (show ¬ 2 ∣ x by omega))) (by rw [← hN]; exact hx)))
-  by_cases hb : b % 2 = 0 <;> by_cases hc : c % 2 = 0
-  all_goals first | omega | (have := key c h13 (by omega) (by omega); omega) | (have := key b h12 (by omega) (by omega); omega)
+  have hN : a k = 2 * d := by
+    rcases h15 m (by omega) ⟨2, by omega⟩ with h | h | h <;> omega
+  have key : ∀ x, x ∣ a k → x < d → x % 2 = 1 → 2 * x ≤ b ∨ 2 * x = c ∨ 2 * x = d :=
+    fun x hx hxd ho => h15 (2 * x) (by omega) (by
+      rw [hN]; exact mul_dvd_mul_left 2 (Nat.Coprime.dvd_of_dvd_mul_left
+        ((Nat.Prime.coprime_iff_not_dvd Nat.prime_two).2 (by omega)).symm
+        (by rw [← hN]; exact hx)))
+  by_cases hc : c % 2 = 1
+  · have := key c h13 h10 hc; omega
+  · have := key b h12 (by omega) (by omega); omega
 
 lemma prop_a0_divisible_by_31_case_j_gt_0_and_not_4_div_ak (a : ℕ → ℕ)
   (hpos : ∀ n : ℕ, a n > 0)
@@ -181,14 +162,8 @@ lemma prop_a0_divisible_by_31_h_main' (a : ℕ → ℕ)
   obtain ⟨t, ht⟩ := h_4_div_ak
   have h1 := h15 (2 * t) (by omega) ⟨2, by omega⟩
   have h2 := h15 t (by omega) ⟨4, by omega⟩
-  have hd : d ≤ 2 * t := by
-    obtain ⟨e, he⟩ := h14
-    have h₂ : 2 ≤ e := by by_contra! h; interval_cases e <;> omega
-    linarith [Nat.mul_le_mul (le_refl d) h₂]
-  have hc : c ≤ t := by
-    obtain ⟨f, hf⟩ := h13
-    have h₄ : 4 ≤ f := by by_contra! h; interval_cases f <;> omega
-    linarith [Nat.mul_le_mul (le_refl c) h₄]
+  have hd : d ≤ 2 * t := by obtain ⟨e, he⟩ := h14; linarith [Nat.mul_le_mul (le_refl d) (show 2 ≤ e by by_contra! h; interval_cases e <;> omega)]
+  have hc : c ≤ t := by obtain ⟨f, hf⟩ := h13; linarith [Nat.mul_le_mul (le_refl c) (show 4 ≤ f by by_contra! h; interval_cases f <;> omega)]
   omega
 
 lemma prop_a0_divisible_by_31_case_j_gt_0_and_4_div_ak (a : ℕ → ℕ)
@@ -225,14 +200,14 @@ lemma prop_a0_divisible_by_31_h_contradiction (a : ℕ → ℕ)
   (hj2 : ∀ i < j, ¬ (3 ∣ a i))
   (h_j_pos : j > 0):
   False := by
-  obtain ⟨k, hk⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
+  obtain ⟨k, rfl⟩ : ∃ k, j = k + 1 := ⟨j - 1, by omega⟩
   obtain ⟨b, c, d, h9, h10, h11, h12, h13, h14, h15, h16⟩ := h1 k
-  have h₁ : ¬(3 ∣ a k) := hj2 k (by omega)
-  have h₂ : 3 ∣ b + c + d := by rw [← h16, ← hk]; exact hj1
+  have h₁ : ¬ 3 ∣ a k := hj2 k (by omega)
+  have h₂ : 3 ∣ b + c + d := h16 ▸ hj1
   have h₃ : ∀ e, e ∣ a k → ¬ 3 ∣ e := fun e he h => h₁ (dvd_trans h he)
   by_cases h₄ : 4 ∣ a k
-  · exact prop_a0_divisible_by_31_case_j_gt_0_and_4_div_ak a hpos h1 k j hk h₁ b c d h9 h10 h11 h12 h13 h14 h15 h16 h₂ (h₃ b h12) (h₃ c h13) (h₃ d h14) h₄
-  · exact prop_a0_divisible_by_31_case_j_gt_0_and_not_4_div_ak a hpos h1 k j hk h₁ b c d h9 h10 h11 h12 h13 h14 h15 h16 h₂ (h₃ b h12) (h₃ c h13) (h₃ d h14) h₄
+  · exact prop_a0_divisible_by_31_case_j_gt_0_and_4_div_ak a hpos h1 k (k + 1) rfl h₁ b c d h9 h10 h11 h12 h13 h14 h15 h16 h₂ (h₃ b h12) (h₃ c h13) (h₃ d h14) h₄
+  · exact prop_a0_divisible_by_31_case_j_gt_0_and_not_4_div_ak a hpos h1 k (k + 1) rfl h₁ b c d h9 h10 h11 h12 h13 h14 h15 h16 h₂ (h₃ b h12) (h₃ c h13) (h₃ d h14) h₄
 
 theorem prop_a0_divisible_by_3 (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) (h_exists_first_term_div_3 : ∃ j, 3 ∣ a j) : 3 ∣ a 0 := by
   obtain ⟨j, hj1, hj2⟩ := exists_first_term_divisible_by_3 a hpos h1; rcases Nat.eq_zero_or_pos j with rfl | hj; exacts [hj1, (prop_a0_divisible_by_31_h_contradiction a hpos h1 j hj1 hj2 (by omega)).elim]
@@ -276,10 +251,8 @@ lemma valuation_of_3_of_sum_of_divisors1_main (a : ℕ → ℕ)
   (h12 : 12 ∣ x):
   padicValNat 3 (x / 2 + x / 3 + x / 4) = padicValNat 3 x - 1 := by
   obtain ⟨k, rfl⟩ := h12
-  rcases Nat.eq_zero_or_pos k with rfl | hk
-  · simp
-  rw [show 12 * k / 2 + 12 * k / 3 + 12 * k / 4 = 13 * k by omega, show 12 * k = 3 * (4 * k) by ring, padicValNat.mul (by norm_num : (13:ℕ) ≠ 0) (by omega : k ≠ 0), padicValNat.mul (by norm_num : (3:ℕ) ≠ 0) (by omega : 4 * k ≠ 0), padicValNat.mul (by norm_num : (4:ℕ) ≠ 0) (by omega : k ≠ 0), padicValNat.eq_zero_of_not_dvd (by norm_num : ¬ 3 ∣ 13), padicValNat.self (by norm_num : 1 < 3), padicValNat.eq_zero_of_not_dvd (by norm_num : ¬ 3 ∣ 4)]
-  omega
+  rw [show 12 * k / 2 + 12 * k / 3 + 12 * k / 4 = 13 * k by omega, show 12 * k = 3 * (4 * k) by ring]
+  by_cases hk : k = 0 <;> simp [hk, padicValNat.mul, padicValNat.self, padicValNat.eq_zero_of_not_dvd, show ¬ 3 ∣ 13 by norm_num, show ¬ 3 ∣ 4 by norm_num]
 
 theorem valuation_of_3_of_sum_of_divisors (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) (x : ℕ) (h_div_3 : 3 ∣ x) (h_div_4 : 4 ∣ x):
   padicValNat 3 (x / 2 + x / 3 + x / 4) = padicValNat 3 x - 1 := by
@@ -287,21 +260,15 @@ theorem valuation_of_3_of_sum_of_divisors (a : ℕ → ℕ) (hpos : ∀ n : ℕ,
 
 lemma round1_h_bcd_form (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) (k : ℕ) (h12 : 12 ∣ a k):
   ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a k ∧ b ∣ a k ∧ c ∣ a k ∧ d ∣ a k ∧ (∀ e : ℕ, e < a k → e ∣ a k → e ≤ b ∨ e = c ∨ e = d) ∧ a (k + 1) = b + c + d ∧ b = a k / 4 ∧ c = a k / 3 ∧ d = a k / 2 := by
-  obtain ⟨q, hq⟩ := h12; have hp := hpos k
-  obtain ⟨b, c, d, hbc, hcd, hdn, hb, hc, hd, hm, hn⟩ := h1 k
-  have hd6 : d = 6 * q := by
-    refine le_antisymm ?_ (by have := hm (6 * q) (by omega) ⟨2, by omega⟩; omega)
-    obtain ⟨t, ht⟩ := hd
-    rcases Nat.lt_or_ge t 2 with h | h <;> nlinarith [Nat.zero_le d]
-  have hc4 : c = 4 * q := by
-    refine le_antisymm ?_ (by have := hm (4 * q) (by omega) ⟨3, by omega⟩; omega)
-    obtain ⟨t, ht⟩ := hc
-    rcases Nat.lt_or_ge t 3 with h | h <;> nlinarith [Nat.zero_le c]
-  have hb3 : b = 3 * q := by
-    refine le_antisymm ?_ (by have := hm (3 * q) (by omega) ⟨4, by omega⟩; omega)
-    obtain ⟨t, ht⟩ := hb
-    rcases Nat.lt_or_ge t 4 with h | h <;> nlinarith [Nat.zero_le b]
-  exact ⟨b, c, d, hbc, hcd, hdn, hb, hc, hd, hm, hn, by omega, by omega, by omega⟩
+  obtain ⟨q, hq⟩ := h12
+  obtain ⟨b, c, d, hbc, hcd, hdn, ⟨r, hr⟩, ⟨s, hs⟩, ⟨t, ht⟩, hm, hn⟩ := h1 k
+  have := hm (6 * q) (by omega) ⟨2, by omega⟩
+  have := hm (4 * q) (by omega) ⟨3, by omega⟩
+  have := hm (3 * q) (by omega) ⟨4, by omega⟩
+  have : d ≤ 6 * q := by rcases t with _ | _ | t <;> nlinarith
+  have : c ≤ 4 * q := by rcases s with _ | _ | _ | s <;> nlinarith
+  have : b ≤ 3 * q := by rcases r with _ | _ | _ | _ | r <;> nlinarith
+  exact ⟨b, c, d, hbc, hcd, hdn, ⟨r, hr⟩, ⟨s, hs⟩, ⟨t, ht⟩, hm, hn, by omega, by omega, by omega⟩
 
 lemma round1_h1_prime (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) :
   ∀ k : ℕ, (∀ i < k, 12 ∣ a i) → padicValNat 2 (a k) = padicValNat 2 (a 0) - 2 * k ∧ padicValNat 3 (a k) = padicValNat 3 (a 0) - k := by
@@ -322,56 +289,14 @@ lemma round1_h_exists_k (a : ℕ → ℕ)
   (hpos : ∀ n : ℕ, a n > 0)
   (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d):
   ∃ k, ¬(12 ∣ a k) := by
+  have H : ∀ n e j : ℕ, e ∣ a n → e * j < a n → e * (j + 1) ≤ a n := fun n e j ⟨k, hk⟩ h => by rw [hk] at h ⊢; exact Nat.mul_le_mul_left e (Nat.succ_le_of_lt (lt_of_mul_lt_mul_left h (Nat.zero_le e)))
   have step : ∀ n, 12 ∣ a n → 12 * a (n + 1) = 13 * a n := by
-    intro n h12
-    obtain ⟨t, ht⟩ := h12
-    obtain ⟨b, c, d, hbc, hcd, hdlt, hbm, hcm, hdm, hmax, hnext⟩ := h1 n
-    have hm := hpos n
-    have H : ∀ e j : ℕ, e ∣ a n → e * j < a n → e * j + e ≤ a n := by
-      intro e j he hej
-      obtain ⟨k, hk⟩ := he
-      by_contra hc
-      push_neg at hc
-      have hjk : j < k := by
-        by_contra hh
-        push_neg at hh
-        have := Nat.mul_le_mul_left e hh
-        omega
-      nlinarith [Nat.mul_le_mul_left e (show j + 1 ≤ k by omega)]
-    have ht0 : 0 < t := by omega
-    have h6 : 6 * t ∣ a n := ⟨2, by rw [ht]; ring⟩
-    have h4 : 4 * t ∣ a n := ⟨3, by rw [ht]; ring⟩
-    have h3 : 3 * t ∣ a n := ⟨4, by rw [ht]; ring⟩
-    have hd2 := H d 1 hdm (by omega)
-    have hd6 : d = 6 * t := by
-      have := hmax (6 * t) (by omega) h6
-      omega
-    have hc4 : c = 4 * t := by
-      have hc3 := H c 2 hcm (by omega)
-      have := hmax (4 * t) (by omega) h4
-      omega
-    have hb3 : b = 3 * t := by
-      have hb4 := H b 3 hbm (by omega)
-      have := hmax (3 * t) (by omega) h3
-      omega
-    omega
-  by_contra hcon
-  push_neg at hcon
-  have hstep : ∀ n, 12 * a (n + 1) = 13 * a n := fun n => step n (hcon n)
-  have hpow : ∀ j n, 12 ^ j ∣ a n := by
-    intro j
-    induction j with
-    | zero => intro n; simp
-    | succ j ih =>
-      intro n
-      have h1' : 12 ^ (j + 1) ∣ 12 * a (n + 1) := by
-        rw [pow_succ, mul_comm (12 ^ j) 12]
-        exact mul_dvd_mul_left 12 (ih (n + 1))
-      rw [hstep n] at h1'
-      exact Nat.Coprime.dvd_of_dvd_mul_left (Nat.Coprime.pow_left _ (by norm_num)) h1'
-  have hd := Nat.le_of_dvd (hpos 0) (hpow (a 0) 0)
-  have hlt : a 0 < 12 ^ a 0 := Nat.lt_pow_self (by norm_num)
-  grind
+    rintro n ⟨t, ht⟩; obtain ⟨b, c, d, hbc, hcd, hdl, hbm, hcm, hdm, hm, hn⟩ := h1 n; have := hpos n
+    have := H n d 1 hdm (by omega); have := H n c 2 hcm (by omega); have := H n b 3 hbm (by omega)
+    have := hm (6 * t) (by omega) ⟨2, by omega⟩; have := hm (4 * t) (by omega) ⟨3, by omega⟩; have := hm (3 * t) (by omega) ⟨4, by omega⟩; omega
+  by_contra! hcon
+  have hpow : ∀ j n, 12 ^ j ∣ a n := fun j => by induction j with | zero => simp | succ j ih => exact fun n => (Nat.Coprime.pow_left _ (by norm_num) : Nat.Coprime (12 ^ (j + 1)) 13).dvd_of_dvd_mul_left (by rw [← step n (hcon n), pow_succ']; exact mul_dvd_mul_left 12 (ih (n + 1)))
+  exact absurd (Nat.le_of_dvd (hpos 0) (hpow (a 0) 0)) (not_le.2 (Nat.lt_pow_self (by norm_num)))
 
 lemma round1_h_3_div_a0 (a : ℕ → ℕ)
   (hpos : ∀ n : ℕ, a n > 0)
@@ -387,22 +312,14 @@ lemma round1_h_main (a : ℕ → ℕ)
   padicValNat 3 (a 0) ≥ 1 := by
   exact one_le_padicValNat_of_dvd (hpos 0) h_3_div_a0
 
-lemma round1_h_a0_even (a : ℕ → ℕ)
-  (hpos : ∀ n : ℕ, a n > 0)
-  (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d):
-  Even (a 0) := by
-  apply a0_is_even <;> assumption
-
 lemma round1_h_exists_j_div_3 (a : ℕ → ℕ)
   (hpos : ∀ n : ℕ, a n > 0)
   (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d):
-  ∃ j, 3 ∣ a j := by
-  exact (exists_first_term_divisible_by_3 a hpos h1).imp fun _ h => h.1
+  ∃ j, 3 ∣ a j := by exact ⟨0, round1_h_3_div_a0 a hpos h1⟩
 
 lemma round1_hb (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) : ∀ n : ℕ, 2 ∣ a n := by
   suffices key : ∀ m n, a n ≤ m → 2 ∣ a n from fun n => key (a n) n le_rfl
-  intro m; induction m with
-  | zero => intro n hn; have := hpos n; omega | succ m ih => intro n hn; by_contra h; obtain ⟨b, c, d, hbc, hcd, hdN, hb, hc, hd, -, hs⟩ := h1 n; obtain ⟨k, hk⟩ := id hd; have h3 : 3 ≤ k := (by rcases k with _ | _ | _ | k <;> omega); have h3d : 3 * d ≤ a n := (by rw [hk]; nlinarith); have hodd : ∀ x, x ∣ a n → ¬ 2 ∣ x := fun x hx h2 => (by have := dvd_trans h2 hx; omega); have := hodd b hb; have := hodd c hc; have := hodd d hd; have := ih (n+1) (by omega); omega
+  intro m; induction m with | zero => intro n hn; have := hpos n; omega | succ m ih => intro n hn; by_contra h; obtain ⟨b, c, d, hbc, hcd, hdN, hb, hc, hd, -, hs⟩ := h1 n; obtain ⟨k, hk⟩ := id hd; have h3 : 3 ≤ k := (by rcases k with _ | _ | _ | k <;> omega); have h3d : 3 * d ≤ a n := (by rw [hk]; nlinarith); have hodd : ∀ x, x ∣ a n → ¬ 2 ∣ x := fun x hx h2 => h (h2.trans hx); have := hodd b hb; have := hodd c hc; have := hodd d hd; have := ih (n+1) (by omega); omega
 
 lemma round1_h_2_divides_a_n (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) : ∀ n : ℕ, 2 ∣ a n := by
   exact round1_hb a hpos h1
@@ -412,7 +329,7 @@ lemma round1_h_3_div_a0'' (a : ℕ → ℕ)
   (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d)
   (h_exists_j_div_3 : ∃ j, 3 ∣ a j):
   3 ∣ a 0 := by
-  exact prop_a0_divisible_by_3 a hpos h1 h_exists_j_div_3
+  apply round1_h_3_div_a0 <;> assumption
 
 lemma round3_h_main (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) : ∀ n : ℕ, 3 ∣ a n := by
   intro n
@@ -424,11 +341,32 @@ lemma round1_h_3_divides_a_n (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1
 lemma exists_first_k_not_divisible_by_12_and_divisible_by_5_main_proof (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) (h_5_div : 5 ∣ a 0) :
   ∃ k, ¬ (12 ∣ a k) ∧ (5 ∣ a k) := by
   by_contra H
-  have key : ∀ n, 5 ∣ a n → 12 * a (n + 1) = 13 * a n := fun n h5 => by obtain ⟨s, hs⟩ : 12 ∣ a n := (by by_contra h; exact H ⟨n, h, h5⟩); obtain ⟨b, c, d, hbc, hcd, hdN, ⟨m3, hm3⟩, ⟨m2, hm2⟩, ⟨m1, hm1⟩, hmax, hsucc⟩ := h1 n; have hp := hpos n; have u6 := hmax (6 * s) (by omega) ⟨2, by omega⟩; have u4 := hmax (4 * s) (by omega) ⟨3, by omega⟩; have u3 := hmax (3 * s) (by omega) ⟨4, by omega⟩; have k1 : 2 ≤ m1 := (by by_contra h; push_neg at h; interval_cases m1 <;> omega); have e1 := Nat.mul_le_mul (le_refl d) k1; have k2 : 3 ≤ m2 := (by by_contra h; push_neg at h; interval_cases m2 <;> omega); have e2 := Nat.mul_le_mul (le_refl c) k2; have k3 : 4 ≤ m3 := (by by_contra h; push_neg at h; interval_cases m3 <;> omega); have e3 := Nat.mul_le_mul (le_refl b) k3; omega
-  have main : ∀ n, 5 ∣ a n ∧ 12 ^ n * a n = 13 ^ n * a 0 := fun n => by induction n with | zero => exact ⟨h_5_div, by simp⟩ | succ n ih => have k := key n ih.1; refine ⟨by omega, ?_⟩; rw [show 12 ^ (n + 1) * a (n + 1) = 12 ^ n * (12 * a (n + 1)) by ring, k, show 12 ^ n * (13 * a n) = 13 * (12 ^ n * a n) by ring, ih.2]; ring
-  have hlt : ∀ m : ℕ, m < 12 ^ m := fun m => by induction m with | zero => norm_num | succ k ih => rw [pow_succ]; omega
+  have key : ∀ n, 5 ∣ a n → 12 * a (n + 1) = 13 * a n := by
+    intro n h5
+    obtain ⟨s, hs⟩ : 12 ∣ a n := by by_contra h; exact H ⟨n, h, h5⟩
+    obtain ⟨b, c, d, hbc, hcd, hdN, ⟨m3, hm3⟩, ⟨m2, hm2⟩, ⟨m1, hm1⟩, hmax, hsucc⟩ := h1 n
+    have u6 := hmax (6 * s) (by omega) ⟨2, by omega⟩
+    have u4 := hmax (4 * s) (by omega) ⟨3, by omega⟩
+    have u3 := hmax (3 * s) (by omega) ⟨4, by omega⟩
+    have e1 := Nat.mul_le_mul (le_refl d) (show 2 ≤ m1 by by_contra! h; interval_cases m1 <;> omega)
+    have e2 := Nat.mul_le_mul (le_refl c) (show 3 ≤ m2 by by_contra! h; interval_cases m2 <;> omega)
+    have e3 := Nat.mul_le_mul (le_refl b) (show 4 ≤ m3 by by_contra! h; interval_cases m3 <;> omega)
+    omega
+  have main : ∀ n, 5 ∣ a n ∧ 12 ^ n * a n = 13 ^ n * a 0 := by
+    intro n
+    induction n with
+    | zero => simp [h_5_div]
+    | succ n ih =>
+      have k := key n ih.1
+      exact ⟨by omega, by rw [pow_succ, pow_succ]; linarith [congrArg (12 ^ n * ·) k, ih.2]⟩
+  have hlt : ∀ m : ℕ, m < 12 ^ m := fun m => by
+    induction m with
+    | zero => norm_num
+    | succ k ih => rw [pow_succ]; omega
   have hd : 12 ^ a 0 ∣ a 0 := (Nat.Coprime.pow (a 0) (a 0) (by norm_num : Nat.Coprime 12 13)).dvd_of_dvd_mul_left ⟨a (a 0), (main (a 0)).2.symm⟩
-  have := Nat.le_of_dvd (hpos 0) hd; have := hlt (a 0); omega
+  have := Nat.le_of_dvd (hpos 0) hd
+  have := hlt (a 0)
+  omega
 
 theorem exists_first_k_not_divisible_by_12_and_divisible_by_5 (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0) (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) (h_5_div : 5 ∣ a 0) :
   ∃ k, ¬ (12 ∣ a k) ∧ (5 ∣ a k) := by
@@ -438,14 +376,11 @@ lemma if_a_n_is_30k_then_a_n_plus_1_is_odd_main_proof (a : ℕ → ℕ) (hpos : 
   (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d)
   (n k : ℕ) (hk_coprime_2 : Nat.Coprime k 2) (h : a n = 30 * k) :
   Odd (a (n + 1)) := by
-  obtain ⟨b, c, d, hbc, hcd, hd, hb, hc, hdv, hmax, hsum⟩ := h1 n
-  rw [h] at hd hb hc hdv hmax; have hk0 : 0 < k := (by have := hpos n; omega)
+  obtain ⟨b, c, d, hbc, hcd, hd, hb, hc, hdv, hmax, hsum⟩ := h1 n; rw [h] at hd hb hc hdv hmax
   have hodd : k % 2 = 1 := (by by_contra h2; have := Nat.Coprime.coprime_dvd_left (show 2 ∣ k by omega) hk_coprime_2; norm_num at this)
-  have D : ∀ x, x ∣ 30 * k → 6 * k < x → x < 30 * k → x = 10 * k ∨ x = 15 * k := by rintro x ⟨m, hm⟩ h6 hlt; have hm5 : m < 5 := (by nlinarith [Nat.zero_le x]); interval_cases m <;> omega
-  have hd15 : d = 15 * k := by rcases hmax (15 * k) (by omega) ⟨2, by omega⟩ with h' | h' | h' <;> have := D d hdv (by omega) hd <;> omega
-  have hc10 : c = 10 * k := by rcases hmax (10 * k) (by omega) ⟨3, by omega⟩ with h' | h' | h' <;> have := D c hc (by omega) (by omega) <;> omega
-  have hb6 : b = 6 * k := by rcases hmax (6 * k) (by omega) ⟨5, by omega⟩ with h' | h' | h' <;> (by_contra hne; have := D b hb (by omega) (by omega); omega)
-  rw [hsum, Nat.odd_iff]; omega
+  have D : ∀ x, x ∣ 30 * k → 6 * k < x → x < 30 * k → x = 10 * k ∨ x = 15 * k := by rintro x ⟨m, hm⟩ h6 hlt; have : m < 5 := (by nlinarith [Nat.zero_le x]); interval_cases m <;> omega
+  have hd15 : d = 15 * k := (by rcases hmax (15 * k) (by omega) ⟨2, by omega⟩ with h' | h' | h' <;> have := D d hdv (by omega) hd <;> omega); have hc10 : c = 10 * k := (by rcases hmax (10 * k) (by omega) ⟨3, by omega⟩ with h' | h' | h' <;> have := D c hc (by omega) (by omega) <;> omega)
+  have hb6 : b = 6 * k := (by rcases hmax (6 * k) (by omega) ⟨5, by omega⟩ with h' | h' | h' <;> (by_contra hne; have := D b hb (by omega) (by omega); omega)); rw [hsum, Nat.odd_iff]; omega
 
 theorem if_a_n_is_30k_then_a_n_plus_1_is_odd (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0)
   (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) (n k : ℕ) (hk_coprime_2 : Nat.Coprime k 2) :
@@ -476,9 +411,8 @@ lemma round1_exists_m (a : ℕ → ℕ) (hpos : ∀ n : ℕ, a n > 0)
   (h1 : ∀ n : ℕ, ∃ b c d : ℕ, b < c ∧ c < d ∧ d < a n ∧ b ∣ a n ∧ c ∣ a n ∧ d ∣ a n ∧ (∀ e : ℕ, e < a n → e ∣ a n → e ≤ b ∨ e = c ∨ e = d) ∧ a (n + 1) = b + c + d) :
   ∃ m : ℕ, a 0 = 6 * m ∧ ¬ (5 ∣ m) := by
   obtain ⟨j, hj, -⟩ := exists_first_term_divisible_by_3 a hpos h1
-  have h3 := prop_a0_divisible_by_3 a hpos h1 ⟨j, hj⟩
   have h2 := even_iff_two_dvd.mp (a0_is_even a hpos h1 hpos h1)
-  obtain ⟨m, hm⟩ : 6 ∣ a 0 := by omega
+  obtain ⟨m, hm⟩ : 6 ∣ a 0 := by have := prop_a0_divisible_by_3 a hpos h1 ⟨j, hj⟩; omega
   exact ⟨m, hm, fun h => an_cannot_be_divisible_by_5 a hpos h1 ⟨0, by rw [hm]; exact h.mul_left 6⟩⟩
 
 lemma round1_h_not_5_div_a0 (a : ℕ → ℕ)
@@ -523,7 +457,9 @@ lemma imo2025_p4_right8_h1 (a0 k n : ℕ)
   (hn : Nat.Coprime n 10)
   (ha0 : a0 = 6 * 12 ^ k * n):
   n ≥ 1 := by
-  exact Nat.pos_of_ne_zero (by rintro rfl; simp at hn)
+  apply Nat.pos_of_ne_zero
+  rintro rfl
+  grind
 
 lemma imo2025_p4_right8_h2 (a0 k n : ℕ)
   (hn : Nat.Coprime n 10)
@@ -558,23 +494,16 @@ lemma imo2025_p4_right1_main (a0 k n : ℕ)
     (if (m + 1) ≤ k then 6 * 12 ^ (k - (m + 1)) * 13 ^ (m + 1) * n else 6 * 13 ^ k * n) =
     b + c + d := by
   intro m; by_cases hm : m + 1 ≤ k
-  · obtain ⟨P, hP⟩ : ∃ P, P = 6 * 12 ^ (k - (m + 1)) * 13 ^ m * n := ⟨_, rfl⟩
-    have hP0 : 0 < P := by rw [hP]; exact Nat.mul_pos (by positivity) (by omega)
-    have e1 : 6 * 12 ^ (k - m) * 13 ^ m * n = 12 * P := by rw [hP, show k - m = (k - (m + 1)) + 1 by omega]; ring
-    have e2 : 6 * 12 ^ (k - (m + 1)) * 13 ^ (m + 1) * n = 13 * P := by rw [hP]; ring
-    rw [if_pos (by omega : m ≤ k), if_pos hm, e1, e2]
+  · obtain ⟨P, hP, hP0⟩ : ∃ P, P = 6 * 12 ^ (k - (m + 1)) * 13 ^ m * n ∧ 0 < P := ⟨_, rfl, Nat.mul_pos (by positivity) (by omega)⟩
+    rw [if_pos (by omega : m ≤ k), if_pos hm, show 6 * 12 ^ (k - m) * 13 ^ m * n = 12 * P by rw [hP, show k - m = (k - (m + 1)) + 1 by omega]; ring, show 6 * 12 ^ (k - (m + 1)) * 13 ^ (m + 1) * n = 13 * P by rw [hP]; ring]
     refine ⟨3 * P, 4 * P, 6 * P, by omega, by omega, by omega, ⟨4, by ring⟩, ⟨3, by ring⟩, ⟨2, by ring⟩, ?_, by ring⟩
     rintro e he ⟨f, hf⟩; rcases Nat.lt_or_ge f 4 with h | h
     · interval_cases f <;> omega
     · have := Nat.mul_le_mul (le_refl e) h; left; linarith
-  · have hc : Nat.Coprime (13 ^ k * n) 10 := Nat.Coprime.mul (Nat.Coprime.pow_left k (by norm_num)) hn
-    have hN : (if m ≤ k then 6 * 12 ^ (k - m) * 13 ^ m * n else 6 * 13 ^ k * n) = 6 * (13 ^ k * n) := by split_ifs with h <;> (try rw [show k - m = 0 by omega, show m = k by omega]) <;> ring
-    rw [if_neg hm, hN, show 6 * 13 ^ k * n = 6 * (13 ^ k * n) by ring]
-    have hQ : 0 < 13 ^ k * n := Nat.mul_pos (by positivity) (by omega)
-    generalize 13 ^ k * n = Q at hQ hc ⊢
-    have g : Nat.gcd Q 10 = 1 := hc
-    have h2 : ¬ 2 ∣ Q := fun h => by have := Nat.dvd_gcd h (by norm_num : 2 ∣ 10); omega
-    have h5 : ¬ 5 ∣ Q := fun h => by have := Nat.dvd_gcd h (by norm_num : 5 ∣ 10); omega
+  · rw [if_neg hm, show (if m ≤ k then 6 * 12 ^ (k - m) * 13 ^ m * n else 6 * 13 ^ k * n) = 6 * (13 ^ k * n) by split_ifs with h <;> (try rw [show k - m = 0 by omega, show m = k by omega]) <;> ring, show 6 * 13 ^ k * n = 6 * (13 ^ k * n) by ring]
+    obtain ⟨hQ, g⟩ : 0 < 13 ^ k * n ∧ Nat.gcd (13 ^ k * n) 10 = 1 := ⟨Nat.mul_pos (by positivity) (by omega), Nat.Coprime.mul (Nat.Coprime.pow_left k (by norm_num)) hn⟩
+    generalize 13 ^ k * n = Q at hQ g ⊢
+    have h25 : ¬ 2 ∣ Q ∧ ¬ 5 ∣ Q := ⟨fun h => by have := Nat.dvd_gcd h (by norm_num : 2 ∣ 10); omega, fun h => by have := Nat.dvd_gcd h (by norm_num : 5 ∣ 10); omega⟩
     refine ⟨Q, 2 * Q, 3 * Q, by omega, by omega, by omega, ⟨6, by ring⟩, ⟨3, by ring⟩, ⟨2, by ring⟩, ?_, by ring⟩
     rintro e he ⟨f, hf⟩; rcases Nat.lt_or_ge f 6 with h | h
     · interval_cases f <;> omega
