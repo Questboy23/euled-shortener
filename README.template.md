@@ -38,6 +38,26 @@ To check a result yourself, paste `results/P5/euled.lean` into any Lean 4.21 + M
 
 The models are Claude Haiku plus free models behind a local proxy. Total model spend for P5 was under $0.10.
 
+## Step-count optimizer with certified lower bounds
+
+`euled/stepopt.py` cuts the number of tactic steps in a Lean proof and proves, where it can, that no shorter proof exists over a stated tactic list. It uses no language model, only Lean checks through AXLE.
+
+Study: 439 DeepSeek-Prover-V1.5 miniF2F proofs, of which 256 compile in Lean 4.24 + Mathlib.
+
+| | Minimal mode | Clear mode |
+|---|---|---|
+| Total steps | 9640 → 3076 (68% fewer) | 9640 → 4674 (52% fewer) |
+| Median steps per proof | 25.0 → 1.0 | 25.0 → 2.0 |
+| Certified optimal over the tactic list | 70% | 54% |
+
+- A step is one tactic invocation.
+- The tactic list is 16 generic tactics plus every one-line tactic of the original proof.
+- The lower bound comes from compiling every 1-step proof from the list, and every 2-step proof when the list has at most 31 entries.
+- Clear mode bans `aesop`, `grind`, `decide`, `tauto` and `simp_all`.
+- Every output was re-checked one proof per file. The 22 that failed that check keep their original proof.
+
+Data and scripts are in [`results/steps/`](results/steps/). Write-up: [reedsmoneymaker23.com/euled/steps](https://reedsmoneymaker23.com/euled/steps/). Try it: [reedsmoneymaker23.com/euled/optimize](https://reedsmoneymaker23.com/euled/optimize/).
+
 ## Limits
 
 - Results cover only IMO 2025 P1, P3, P4 and P5. Seed-Prover released no Lean proofs for P2 and P6.

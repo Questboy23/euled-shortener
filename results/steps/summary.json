@@ -1,0 +1,56 @@
+{
+ "minimal": {
+  "attempted": 439,
+  "compiled": 256,
+  "steps_before_total": 9640,
+  "steps_after_total": 3076,
+  "total_step_cut": 0.681,
+  "median_before": 25.0,
+  "median_after": 1.0,
+  "mean_per_proof_cut": 0.765,
+  "chars_cut": 0.643,
+  "certified": 180,
+  "certified_frac": 0.703,
+  "one_step": 157,
+  "one_step_frac": 0.613,
+  "long_proofs": 179,
+  "long_cut": 0.664,
+  "gap_hist": {
+   "0 (optimal)": 180,
+   "1 to 5": 11,
+   "6 to 20": 28,
+   "21 to 100": 21,
+   "over 100": 6,
+   "no bound": 10
+  },
+  "fixpoint_frac": 0.863,
+  "median_seconds": 25.950000000000003
+ },
+ "clear": {
+  "attempted": 439,
+  "compiled": 256,
+  "steps_before_total": 9640,
+  "steps_after_total": 4674,
+  "total_step_cut": 0.515,
+  "median_before": 25.0,
+  "median_after": 2.0,
+  "mean_per_proof_cut": 0.653,
+  "chars_cut": 0.486,
+  "certified": 138,
+  "certified_frac": 0.539,
+  "one_step": 115,
+  "one_step_frac": 0.449,
+  "long_proofs": 179,
+  "long_cut": 0.491,
+  "gap_hist": {
+   "0 (optimal)": 138,
+   "1 to 5": 22,
+   "6 to 20": 43,
+   "21 to 100": 29,
+   "over 100": 11,
+   "no bound": 13
+  },
+  "fixpoint_frac": 0.824,
+  "median_seconds": 96.80000000000001
+ }
+}
